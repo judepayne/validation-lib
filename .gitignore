@@ -23,7 +23,9 @@ htmlcov/
 *.swp
 .DS_Store
 
+# Emacs backup files
+*~
+
 # Project-specific
 IMPLEMENTATION-STATUS.md
 STATUS.md
-*.md~
