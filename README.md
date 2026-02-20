@@ -26,11 +26,38 @@ This library is designed to be embedded in multiple applications, e.g. business 
 
 This library is nearly Prod ready. Furthter down in this README are thoughts on next steps towards full productionization.
 
+## Installation & Usage
 
-## Installation
+### For Development / Embedding in Applications
+
+**Clone the repository:**
 
 ```bash
-pip install git+https://github.com/judepayne/validation-lib.git
+git clone https://github.com/judepayne/validation-lib.git
+cd validation-lib
+```
+
+This approach is currently recommended because:
+- You get both the Python code (`validation_lib/`) AND the business logic (`logic/`)
+- The library can run directly from the cloned directory
+- In production, `logic/` will be hosted remotely (not yet implemented), but for now it needs to be local
+
+**Example: Using in validation-service**
+
+See [validation-service](https://github.com/judepayne/validation-service) for a complete example of embedding validation-lib. The service clones this repository and runs the Python code as a subprocess.
+
+### For Python API Usage (Standalone)
+
+Install Python dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then run tests to verify:
+
+```bash
+pytest tests/
 ```
 
 ## Quick Start
