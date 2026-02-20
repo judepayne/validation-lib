@@ -1,0 +1,80 @@
+# Business Configuration (Tier 2)
+# Business logic config - owned by rules team
+# Defines rulesets, rules, and schema mappings
+
+# Optional: Base URI for rule files
+# If omitted, rules are loaded from relative paths (development mode)
+# For production, set to remote URI: "https://rules-repo.example.com/v2.1/rules"
+# rules_base_uri: "https://rules-repo.example.com/v2.1/rules"
+
+# Note: master_rules_directory is deprecated in favor of rules_base_uri
+# Kept for backward compatibility during transition
+# master_rules_directory: "../rules"
+
+# Rulesets - validation rule sets with metadata
+# Rules are assigned per schema version for version-specific validation
+rulesets:
+  quick:
+    metadata:
+      description: "Essential validation checks for real-time inline validation"
+      purpose: "Use during loan origination to catch critical errors before submission"
+      author: "Data Quality Team"
+      date: "2026-02-18"
+    rules:
+      "https://bank.example.com/schemas/loan/v1.0.0":
+        - rule_id: rule_001_v1  # JSON schema validation
+        - rule_id: rule_002_v1  # Financial soundness checks
+      "https://bank.example.com/schemas/loan/v2.0.0":
+        - rule_id: rule_001_v1  # JSON schema validation (v2 schema)
+        - rule_id: rule_002_v1  # Financial soundness checks
+      # Backward compatibility fallback for tests without $schema
+      loan:
+        - rule_id: rule_001_v1  # JSON schema validation
+        - rule_id: rule_002_v1  # Financial soundness checks
+      facility: []
+      deal: []
+
+  thorough:
+    metadata:
+      description: "Comprehensive validation checks for complete data quality assurance"
+      purpose: "Use for batch processing and final validation before data publication"
+      author: "Data Quality Team"
+      date: "2026-02-18"
+    rules:
+      "https://bank.example.com/schemas/loan/v1.0.0":
+        - rule_id: rule_001_v1  # JSON schema validation
+        - rule_id: rule_002_v1  # Financial soundness checks
+        - rule_id: rule_003_v1  # Status validation
+          children:
+            - rule_id: rule_004_v1  # Balance validation (depends on valid status)
+      "https://bank.example.com/schemas/loan/v2.0.0":
+        - rule_id: rule_001_v1  # JSON schema validation (v2 schema)
+        - rule_id: rule_002_v1  # Financial soundness checks
+        - rule_id: rule_003_v1  # Status validation
+          children:
+            - rule_id: rule_004_v1  # Balance validation (depends on valid status)
+      # Backward compatibility fallback for tests without $schema
+      loan:
+        - rule_id: rule_001_v1  # JSON schema validation
+        - rule_id: rule_002_v1  # Financial soundness checks
+        - rule_id: rule_003_v1  # Status validation
+          children:
+            - rule_id: rule_004_v1  # Balance validation (depends on valid status)
+      facility: []
+      deal: []
+
+# Schema URL to entity helper class mapping
+schema_to_helper_mapping:
+  "https://bank.example.com/schemas/loan/v1.0.0": "loan_v1.LoanV1"
+  "https://bank.example.com/schemas/loan/v2.0.0": "loan_v2.LoanV2"
+
+# Default helper when no $schema field is present
+default_helpers:
+  loan: "loan_v1.LoanV1"
+  # facility: "facility_v1.FacilityV1"  # TODO: Implement
+  # deal: "deal_v1.DealV1"              # TODO: Implement
+
+# Version compatibility settings
+version_compatibility:
+  allow_minor_version_fallback: true
+  strict_major_version: true

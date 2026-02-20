@@ -1,0 +1,35 @@
+[
+  {
+    "$schema": "https://bank.example.com/schemas/loan/v1.0.0",
+    "id": "TEST-001",
+    "loan_number": "LN-001",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2025-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://bank.example.com/schemas/loan/v1.0.0",
+    "id": "TEST-BAD-001",
+    "loan_number": "LN-BAD-001",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 150000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2025-01-01"
+    },
+    "status": "active"
+  }
+]

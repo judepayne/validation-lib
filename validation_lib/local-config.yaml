@@ -1,0 +1,12 @@
+# Local Configuration (Tier 1)
+# Infrastructure config - owned by service team
+# Points to business and coordination service configuration locations
+
+# URI to business config (tier 2)
+# Supports: relative paths, file:// (absolute), http://, https://
+business_config_uri: "../logic/business-config.yaml"
+
+# URI to coordination service config
+# Supports: relative paths, file:// (absolute), http://, https://
+# Can point to centrally managed coordination service config
+coordination_service_config_uri: "../coordination-service-config.yaml"

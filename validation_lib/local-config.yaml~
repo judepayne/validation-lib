@@ -1,0 +1,19 @@
+# Local Configuration (Tier 1)
+# Infrastructure config - owned by service team
+# Points to business configuration location
+
+# URI to business config (tier 2)
+# Supports: relative paths, file:// (absolute), http://, https://
+business_config_uri: "../logic/business-config.yaml"
+
+# Note: Cache directory is hardcoded to /tmp/validation-lib-py/logic/
+# This was previously configurable but is now fixed for simplicity
+
+# Coordination Service Configuration
+# Provides associated data for cross-entity validation rules
+coordination_service:
+  enabled: false                           # Enable/disable coordination service calls
+  base_url: "http://localhost:8081"        # Coordination service endpoint
+  timeout_ms: 5000                         # Request timeout in milliseconds
+  retry_attempts: 3                        # Number of retry attempts on failure
+  circuit_breaker_enabled: false           # Enable circuit breaker pattern (future)
