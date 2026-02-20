@@ -1,11 +1,13 @@
 """Two-tier configuration loading with URI fetching and caching."""
 
 import os
+import sys
 import time
 import yaml
 import hashlib
 import urllib.request
 import urllib.parse
+import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 try:
@@ -18,8 +20,9 @@ except ImportError:
 class ConfigLoader:
     """Handles two-tier configuration: local config + business config."""
 
-    # Hardcoded cache directory for validation-lib-py
-    CACHE_DIR = Path("/tmp/validation-lib-py")
+    # Hardcoded cache directory for validation-lib
+    CACHE_DIR = Path.home() / ".cache" / "validation-lib"
+    REPO_URL = "https://github.com/judepayne/validation-lib.git"
 
     def __init__(self):
         """
@@ -71,6 +74,57 @@ class ConfigLoader:
             self.coordination_service_config = {'enabled': False}
             self.coordination_service_config_loaded_at = time.time()
 
+    def _ensure_logic_available(self) -> Path:
+        """
+        Ensure logic directory is available.
+
+        If logic/ is not found relative to the package installation,
+        clone the validation-lib repository to ~/.cache/validation-lib/
+
+        Returns:
+            Path to logic directory
+        """
+        # First try: Check if logic exists relative to package (development mode)
+        package_dir = Path(files('validation_lib')._paths[0] if hasattr(files('validation_lib'), '_paths')
+                          else files('validation_lib').joinpath('').parent)
+        logic_dev = package_dir.parent / "logic"
+
+        if logic_dev.exists() and logic_dev.is_dir():
+            print(f"[validation-lib] Using logic from development location: {logic_dev}", file=sys.stderr)
+            return logic_dev
+
+        # Second try: Check cache directory
+        cached_repo = self.cache_dir / "repo"
+        logic_cached = cached_repo / "logic"
+
+        if logic_cached.exists() and logic_cached.is_dir():
+            print(f"[validation-lib] Using cached logic: {logic_cached}", file=sys.stderr)
+            return logic_cached
+
+        # Not found - clone the repository
+        print(f"[validation-lib] Logic directory not found. Cloning from {self.REPO_URL}...", file=sys.stderr)
+        print(f"[validation-lib] This is a temporary measure until logic is moved to a remote URL.", file=sys.stderr)
+
+        try:
+            cached_repo.mkdir(parents=True, exist_ok=True)
+            subprocess.run(
+                ["git", "clone", "--depth", "1", self.REPO_URL, str(cached_repo)],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"[validation-lib] Successfully cloned validation-lib to {cached_repo}", file=sys.stderr)
+
+            if not logic_cached.exists():
+                raise RuntimeError(f"Cloned repository but logic/ directory not found at {logic_cached}")
+
+            return logic_cached
+
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to clone validation-lib repository: {e.stderr}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to ensure logic directory is available: {e}")
+
     def _load_yaml(self, path: str) -> Dict[str, Any]:
         """Load YAML file from disk."""
         with open(path) as f:
@@ -99,6 +153,15 @@ class ConfigLoader:
             # Relative path - resolve relative to local config directory
             config_dir = os.path.dirname(os.path.abspath(self.local_config_path))
             path = os.path.join(config_dir, uri)
+
+            # If path doesn't exist and it references logic/, try to ensure logic is available
+            if not os.path.exists(path) and '/logic/' in uri:
+                logic_dir = self._ensure_logic_available()
+                # Reconstruct path using cached logic directory
+                # Extract the part after 'logic/' in the URI
+                logic_relative = uri.split('/logic/', 1)[1] if '/logic/' in uri else uri.split('../logic/', 1)[-1]
+                path = str(logic_dir / logic_relative)
+
             return self._load_yaml(path)
 
         if parsed.scheme == 'file':
