@@ -1,4 +1,15 @@
 from setuptools import setup, find_packages
+import os
+
+# Get all files in logic/ directory recursively
+def get_logic_files():
+    logic_files = []
+    for root, dirs, files in os.walk('logic'):
+        for file in files:
+            # Get path relative to package root
+            path = os.path.join(root, file)
+            logic_files.append(path)
+    return logic_files
 
 setup(
     name="validation-lib",
@@ -7,8 +18,7 @@ setup(
     author="Jude Payne",
     packages=find_packages(),
     package_data={
-        'validation_lib': ['local-config.yaml'],
-        'logic': ['**/*.py', '**/*.yaml', '**/*.json'],
+        '': ['local-config.yaml', 'coordination-service-config.yaml'] + get_logic_files(),
     },
     include_package_data=True,
     install_requires=[
