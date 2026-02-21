@@ -18,7 +18,7 @@ def server():
 def sample_loan():
     """Sample loan entity for testing."""
     return {
-        "$schema": "https://bank.example.com/schemas/loan/v1.0.0",
+        "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
         "id": "TEST-001",
         "loan_number": "LN-001",
         "facility_id": "FAC-100",

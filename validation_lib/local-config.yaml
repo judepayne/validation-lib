@@ -4,7 +4,7 @@
 
 # URI to business config (tier 2)
 # Supports: relative paths, file:// (absolute), http://, https://
-business_config_uri: "../logic/business-config.yaml"
+business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-logic/main/business-config.yaml"
 
 # URI to coordination service config
 # Supports: relative paths, file:// (absolute), http://, https://

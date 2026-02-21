@@ -193,20 +193,28 @@ class LogicPackageFetcher:
         """Extract entity type from schema URL or plain entity type key.
 
         Examples:
+            "https://raw.githubusercontent.com/.../models/loan.schema.v1.0.0.json" → "loan"
             "https://bank.example.com/schemas/loan/v1.0.0" → "loan"
             "loan" → "loan"
             "facility" → "facility"
         """
         if schema_or_type.startswith('http'):
-            # Parse URL path: .../schemas/loan/v1.0.0 → loan
             path = urllib.parse.urlparse(schema_or_type).path
-            # Split path and find entity type (segment before version)
             segments = [s for s in path.split('/') if s]
-            # Look for version-like segment and take the one before it
+
+            # Filename-based versioning: loan.schema.v1.0.0.json → "loan"
+            if segments and segments[-1].endswith('.json'):
+                filename = segments[-1]
+                entity_type = filename.split('.')[0]
+                if entity_type:
+                    return entity_type
+
+            # Path-based versioning: .../schemas/loan/v1.0.0 → "loan"
             for i, segment in enumerate(segments):
                 if segment.startswith('v') and '.' in segment:
                     if i > 0:
                         return segments[i - 1]
+
             # Fallback: second-to-last segment
             if len(segments) >= 2:
                 return segments[-2]
