@@ -9,4 +9,4 @@ business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-log
 # URI to coordination service config
 # Supports: relative paths, file:// (absolute), http://, https://
 # Can point to centrally managed coordination service config
-coordination_service_config_uri: "../coordination-service-config.yaml"
+coordination_service_config_uri: "coordination-service-config.yaml"

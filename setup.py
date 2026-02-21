@@ -7,7 +7,7 @@ setup(
     author="Jude Payne",
     packages=find_packages(),
     package_data={
-        'validation_lib': ['local-config.yaml'],
+        'validation_lib': ['local-config.yaml', 'coordination-service-config.yaml'],
         'logic': ['**/*.py', '**/*.yaml', '**/*.json'],
     },
     include_package_data=True,

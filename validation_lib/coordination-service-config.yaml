@@ -1,0 +1,14 @@
+# Coordination Service Configuration
+# Provides associated data for cross-entity validation rules
+#
+# This file can be:
+# - Local (relative path, absolute path, file:// URI)
+# - Remote (http://, https://)
+#
+# Supports central management - multiple deployments can point to same URL
+
+enabled: false                           # Enable/disable coordination service calls
+base_url: "http://localhost:8081"        # Coordination service endpoint
+timeout_ms: 5000                         # Request timeout in milliseconds
+retry_attempts: 3                        # Number of retry attempts on failure
+circuit_breaker_enabled: false           # Enable circuit breaker pattern (future)
