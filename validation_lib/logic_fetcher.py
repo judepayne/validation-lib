@@ -28,8 +28,8 @@ class LogicPackageFetcher:
         "entity_helpers/version_registry.py",
     ]
 
-    # Hardcoded cache directory for validation-lib-py
-    CACHE_DIR = Path("/tmp/validation-lib-py/logic")
+    # Hardcoded cache directory for validation-lib
+    CACHE_DIR = Path("/tmp/validation-lib/logic")
 
     def __init__(self):
         """Initialize logic fetcher with fixed cache directory."""

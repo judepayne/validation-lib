@@ -1,5 +1,5 @@
 """
-Public API for validation-lib-py
+Public API for validation-lib
 
 This is the "front door" - the main entry point for all validation operations.
 """

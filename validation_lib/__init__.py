@@ -1,5 +1,5 @@
 """
-validation-lib-py: Business data validation library with dynamic rule loading
+validation-lib: Business data validation library with dynamic rule loading
 
 This library provides a pure Python validation service with:
 - Dynamic rule loading from local or remote sources

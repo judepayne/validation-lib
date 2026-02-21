@@ -18,8 +18,8 @@ except ImportError:
 class ConfigLoader:
     """Handles two-tier configuration: local config + business config."""
 
-    # Hardcoded cache directory for validation-lib-py
-    CACHE_DIR = Path("/tmp/validation-lib-py")
+    # Hardcoded cache directory for validation-lib
+    CACHE_DIR = Path("/tmp/validation-lib")
 
     def __init__(self):
         """

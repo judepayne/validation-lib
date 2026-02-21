@@ -2,7 +2,7 @@
 """
 JSON-RPC 2.0 Server for ValidationService
 
-Provides a JSON-RPC interface to validation-lib-py, enabling usage from any
+Provides a JSON-RPC interface to validation-lib, enabling usage from any
 programming language that can spawn a process and communicate via stdin/stdout.
 
 Protocol: JSON-RPC 2.0 over stdin/stdout (newline-delimited JSON)
