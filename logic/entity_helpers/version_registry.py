@@ -24,7 +24,7 @@ Example scenario:
 1. **Entity data declares schema version:**
    ```json
    {
-     "$schema": "https://bank.example.com/schemas/loan/v1.0.0",
+     "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
      "loan_number": "LN-001",
      ...
    }
@@ -33,8 +33,8 @@ Example scenario:
 2. **Config maps schema URLs to helper classes:**
    ```yaml
    schema_to_helper_mapping:
-     "https://bank.example.com/schemas/loan/v1.0.0": "loan_v1.LoanV1"
-     "https://bank.example.com/schemas/loan/v2.0.0": "loan_v2.LoanV2"
+     "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json": "loan_v1.LoanV1"
+     "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v2.0.0.json": "loan_v2.LoanV2"
 
    default_helpers:
      loan: "loan_v1.LoanV1"  # Used when $schema is absent
@@ -65,8 +65,8 @@ Example scenario:
 ```yaml
 # Schema URL → helper class mapping
 schema_to_helper_mapping:
-  "https://bank.example.com/schemas/loan/v1.0.0": "loan_v1.LoanV1"
-  "https://bank.example.com/schemas/loan/v2.0.0": "loan_v2.LoanV2"
+  "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json": "loan_v1.LoanV1"
+  "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v2.0.0.json": "loan_v2.LoanV2"
 
 # Fallback when $schema is missing
 default_helpers:
@@ -110,9 +110,10 @@ registry = VersionRegistry("test_local-config.yaml")
 ## Adding New Schema Versions
 
 1. Create versioned helper class: `entity_helpers/loan_v3.py`
-2. Add mapping to `business-config.yaml`:
+2. Add the schema file: `models/loan.schema.v3.0.0.json`
+3. Add mapping to `business-config.yaml`:
    ```yaml
-   "https://bank.example.com/schemas/loan/v3.0.0": "loan_v3.LoanV3"
+   "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v3.0.0.json": "loan_v3.LoanV3"
    ```
 3. Restart service (registry reads config at startup)
 

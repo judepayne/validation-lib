@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://bank.example.com/schemas/loan/v1.0.0",
+  "$id": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
   "version": "1.0.0",
   "title": "Loan (v1.0.0)",
   "description": "A loan instrument under a facility - Schema Version 1.0.0",
@@ -160,9 +160,31 @@
       }
     },
     "notes": {
-      "type": "string",
-      "description": "Free-form notes about the loan",
-      "maxLength": 1000
+      "type": "array",
+      "description": "Audit log of notes and operations on this loan, ordered oldest-first",
+      "items": {
+        "type": "object",
+        "required": ["datetime", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "datetime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of this note entry",
+            "examples": ["2024-03-20T14:30:00Z"]
+          },
+          "operation_type": {
+            "type": "string",
+            "description": "Type of operation this note records",
+            "enum": ["note", "passed-validated", "failed-validated", "edited"]
+          },
+          "text": {
+            "type": "string",
+            "description": "Note content",
+            "maxLength": 1000
+          }
+        }
+      }
     }
   }
 }

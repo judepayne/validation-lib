@@ -23,6 +23,7 @@ LOGICAL → PHYSICAL MAPPING (v1.0.0 model):
 - secured → collateral_required
 - payment_frequency → repayment_schedule.frequency
 - payment_count → repayment_schedule.number_of_payments
+- notes → notes
 """
 
 from typing import Optional, List, Tuple
@@ -164,7 +165,7 @@ class LoanV1:
         return self._data.get("repayment_schedule", {}).get("number_of_payments")
 
     @property
-    def notes(self) -> Optional[str]:
+    def notes(self) -> Optional[List[dict]]:
         self._record_access("notes", "notes")
         return self._data.get("notes")
 

@@ -19,7 +19,7 @@ def sample_loan():
     """Sample loan entity for testing."""
     return {
         "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
-        "id": "TEST-001",
+        "id": "LOAN-00001",
         "loan_number": "LN-001",
         "facility_id": "FAC-100",
         "financial": {
@@ -40,7 +40,7 @@ def bad_loan():
     """Bad loan that conforms to schema but fails rule 2 (outstanding balance exceeds principal)."""
     return {
         "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
-        "id": "TEST-BAD-001",
+        "id": "LOAN-99999",
         "loan_number": "LN-BAD-001",
         "facility_id": "FAC-100",
         "financial": {
@@ -214,7 +214,7 @@ class TestBatchValidate:
     def test_batch_validate_multiple_entities(self, service, sample_loan):
         """Test batch validation with multiple entities."""
         loan2 = sample_loan.copy()
-        loan2["id"] = "TEST-002"
+        loan2["id"] = "LOAN-00002"
 
         results = service.batch_validate([sample_loan, loan2], ["id"], "quick")
         assert len(results) == 2
@@ -232,12 +232,12 @@ class TestBatchValidate:
     def test_batch_validates_each_entity(self, service, sample_loan):
         """Test that each entity in batch is validated."""
         loan2 = sample_loan.copy()
-        loan2["id"] = "TEST-002"
+        loan2["id"] = "LOAN-00002"
 
         results = service.batch_validate([sample_loan, loan2], ["id"], "quick")
 
-        assert results[0]['entity_id'] == 'TEST-001'
-        assert results[1]['entity_id'] == 'TEST-002'
+        assert results[0]['entity_id'] == 'LOAN-00001'
+        assert results[1]['entity_id'] == 'LOAN-00002'
 
 
 class TestBatchFileValidate:
@@ -282,8 +282,8 @@ class TestBatchFileValidate:
         results = service.batch_file_validate(file_uri, ["loan"], ["id"], "quick")
 
         # Find results for each loan
-        good_loan_result = next(r for r in results if r['entity_id'] == 'TEST-001')
-        bad_loan_result = next(r for r in results if r['entity_id'] == 'TEST-BAD-001')
+        good_loan_result = next(r for r in results if r['entity_id'] == 'LOAN-00001')
+        bad_loan_result = next(r for r in results if r['entity_id'] == 'LOAN-99999')
 
         # Check that rule_002_v1 passes for good loan
         good_rule_002 = next(
@@ -377,6 +377,87 @@ class TestErrorHandling:
         assert isinstance(results, list)
 
 
+class TestNotesField:
+    """Test the structured notes array field introduced in schema v1.0.0 (updated)."""
+
+    @pytest.fixture
+    def loan_with_notes(self, sample_loan):
+        """Loan carrying two notes entries: one plain note and one operation-typed entry."""
+        import copy
+        loan = copy.deepcopy(sample_loan)
+        loan["id"] = "LOAN-00001"  # must match ^LOAN-[0-9]+$
+        loan["notes"] = [
+            {
+                "datetime": "2024-03-01T09:00:00Z",
+                "operation_type": "note",
+                "text": "Initial review completed. All documentation received."
+            },
+            {
+                "datetime": "2024-03-15T14:30:00Z",
+                "operation_type": "edited",
+                "text": "Interest rate updated following rate reset clause."
+            }
+        ]
+        return loan
+
+    @pytest.fixture
+    def loan_with_notes_no_op_type(self, sample_loan):
+        """Loan with a notes entry that omits the optional operation_type."""
+        import copy
+        loan = copy.deepcopy(sample_loan)
+        loan["id"] = "LOAN-00002"  # must match ^LOAN-[0-9]+$
+        loan["notes"] = [
+            {
+                "datetime": "2024-06-01T10:00:00Z",
+                "text": "Borrower requested repayment schedule review."
+            }
+        ]
+        return loan
+
+    @pytest.fixture
+    def loan_with_string_notes(self, sample_loan):
+        """Loan using the old freeform string notes field — should fail schema validation."""
+        import copy
+        loan = copy.deepcopy(sample_loan)
+        loan["id"] = "LOAN-00003"  # must match ^LOAN-[0-9]+$
+        loan["notes"] = "Some old-style freeform note"
+        return loan
+
+    def test_loan_with_notes_passes_schema(self, service, loan_with_notes):
+        """Loan with a valid notes array must pass rule_001 (schema validation)."""
+        results = service.validate("loan", loan_with_notes, "quick")
+        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        assert rule_001 is not None, "rule_001_v1 should be present"
+        assert rule_001['status'] == 'PASS', (
+            f"Schema validation should pass for a valid notes array; got: {rule_001.get('message')}"
+        )
+
+    def test_loan_with_notes_passes_all_rules(self, service, loan_with_notes):
+        """Loan with a valid notes array should pass the full thorough ruleset."""
+        results = service.validate("loan", loan_with_notes, "thorough")
+        failures = [r for r in results if r['status'] == 'FAIL']
+        assert failures == [], f"Expected no failures, got: {failures}"
+
+    def test_loan_with_notes_no_op_type_passes_schema(self, service, loan_with_notes_no_op_type):
+        """Notes entry without operation_type (optional field) must still pass schema."""
+        results = service.validate("loan", loan_with_notes_no_op_type, "quick")
+        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        assert rule_001 is not None
+        assert rule_001['status'] == 'PASS', (
+            f"Notes entry missing optional operation_type should still pass schema; "
+            f"got: {rule_001.get('message')}"
+        )
+
+    def test_loan_with_string_notes_fails_schema(self, service, loan_with_string_notes):
+        """Old freeform string notes must fail rule_001 schema validation."""
+        results = service.validate("loan", loan_with_string_notes, "quick")
+        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        assert rule_001 is not None, "rule_001_v1 should be present"
+        assert rule_001['status'] == 'FAIL', (
+            "String notes field should fail schema validation under the new array definition"
+        )
+
+
 class TestEndToEnd:
     """End-to-end integration tests."""
 
@@ -402,9 +483,9 @@ class TestEndToEnd:
         """Test batch validation workflow."""
         # Create multiple loans
         loans = []
-        for i in range(3):
+        for i in range(1, 4):
             loan = sample_loan.copy()
-            loan["id"] = f"TEST-{i:03d}"
+            loan["id"] = f"LOAN-{i:05d}"
             loans.append(loan)
 
         # Batch validate
