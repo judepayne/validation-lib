@@ -199,6 +199,14 @@ class ConfigLoader:
             return base + '/' if not base.endswith('/') else base
         return None
 
+    def get_logic_cache_max_age(self) -> int:
+        """Get maximum logic cache age in seconds before automatic refresh.
+
+        Reads logic_cache_max_age_seconds from local-config.yaml.
+        Defaults to 1800 (30 minutes) if not set.
+        """
+        return int(self.local_config.get('logic_cache_max_age_seconds', 1800))
+
     def get_rules_base_uri(self) -> Optional[str]:
         """Get rules base URI from business config."""
         return self.business_config.get('rules_base_uri')

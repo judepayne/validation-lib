@@ -10,3 +10,8 @@ business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-log
 # Supports: relative paths, file:// (absolute), http://, https://
 # Can point to centrally managed coordination service config
 coordination_service_config_uri: "coordination-service-config.yaml"
+
+# Maximum age of the logic cache in seconds before it is automatically refreshed.
+# Applies both at startup (constructor checks disk cache age) and during a session
+# (checked every 5 minutes against in-memory config age).
+logic_cache_max_age_seconds: 1800

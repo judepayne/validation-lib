@@ -91,7 +91,7 @@ Main entry point for all validation operations.
 
 #### `__init__()`
 
-Initialize service with bundled configuration.
+Initialize service with bundled configuration. Automatically reloads logic from source if the on-disk cache is older than `logic_cache_max_age_seconds` (configured in `local-config.yaml`, default 1800 s).
 
 ```python
 service = ValidationService()
@@ -360,6 +360,9 @@ The library uses a three-tier configuration system for flexibility across deploy
 # Points to business and coordination service configuration locations
 business_config_uri: "../logic/business-config.yaml"
 coordination_service_config_uri: "../coordination-service-config.yaml"
+
+# Maximum cache age before automatic refresh (seconds)
+logic_cache_max_age_seconds: 1800
 ```
 
 Each URI supports:
@@ -403,29 +406,22 @@ Like business config, this file can be:
 
 ### Automatic Config Refresh
 
-The library automatically checks and reloads stale configurations to keep distributed instances synchronized:
+The library automatically keeps logic fresh at two points:
 
-**Refresh intervals:**
-- Business config: Auto-reloads if older than **30 minutes**
-- Coordination service config: Auto-reloads if older than **30 minutes**
-- Check frequency: Every **5 minutes** (debounced to avoid overhead)
+**1. At startup (constructor):** If the on-disk logic cache is older than `logic_cache_max_age_seconds`, `ValidationService.__init__()` reloads from source before returning. This means any stale cache is silently replaced before the first validation call.
 
-The freshness check happens automatically at the start of API calls (`validate()`, `discover_rules()`, etc.). This ensures:
-- Active instances stay fresh with centralized config changes
-- Minimal performance overhead (check only every 5 minutes)
-- No background threads or complex infrastructure needed
+**2. During a session (mid-session check):** Before every API call (`validate()`, `discover_rules()`, etc.), the in-memory config age is checked against `logic_cache_max_age_seconds`. The check is debounced to run at most every **5 minutes** to avoid overhead.
+
+**Configurable limit:** `logic_cache_max_age_seconds` in `local-config.yaml` (default **1800 s / 30 minutes**).
 
 **How it works:**
 ```python
 service = ValidationService()
+# If disk cache was > 30 min old, rules were already refreshed here
 
-# First call: loads configs
+# Normal calls — mid-session check runs silently every 5 min
 service.validate(loan1, "quick")
-
-# ... 35 minutes later ...
-
-# This call triggers auto-reload (configs > 30 min old)
-service.validate(loan2, "quick")  # Fresh configs automatically loaded
+service.validate(loan2, "quick")
 ```
 
 ### Cache Directory
@@ -445,7 +441,7 @@ service.reload_logic()  # Force immediate reload
 **Cache age monitoring:**
 ```python
 age = service.get_cache_age()
-if age and age > 1800:  # 30 minutes
+if age is not None:
     print(f"Cache is {age/60:.0f} minutes old")
 ```
 
@@ -660,7 +656,7 @@ This is a POC implementation. The following areas require attention for producti
 6. Set `enabled: true` in `coordination-service-config.yaml`
 7. Tune `timeout_ms` and `retry_attempts` based on SLAs
 
-**Auto-refresh:** The library automatically reloads configs every 30 minutes. When you update the remote config file, all distributed instances will pick up changes within 30 minutes without restarts.
+**Auto-refresh:** The library automatically reloads configs based on `logic_cache_max_age_seconds` (default 30 minutes). When you update the remote config file, all distributed instances pick up changes within that window without restarts.
 
 ### 2. Monitoring & Observability
 
@@ -716,14 +712,7 @@ logger.info("validation_completed",
 
 **Production Requirements:**
 
-**Configurable Auto-Refresh Intervals:**
-```yaml
-# local-config.yaml
-auto_refresh:
-  business_config_max_age_seconds: 1800      # 30 minutes
-  coordination_config_max_age_seconds: 1800  # 30 minutes
-  check_interval_seconds: 300                # 5 minutes
-```
+**Configurable Auto-Refresh Interval:** ✅ Implemented — set `logic_cache_max_age_seconds` in `local-config.yaml` (default 1800 s). The 5-minute debounce check interval remains hardcoded.
 
 **Environment Variable Overrides:**
 ```python
@@ -861,7 +850,7 @@ CMD ["python", "-m", "validation_lib.jsonrpc_server"]
 ### Production Readiness Checklist
 
 - ✅ Core validation logic complete
-- ✅ Auto-refresh implemented (30 min)
+- ✅ Auto-refresh implemented (configurable via `logic_cache_max_age_seconds`, default 30 min)
 - ✅ JSON-RPC server for multi-language support
 - ✅ Comprehensive test coverage (59 tests)
 - ✅ Configuration indirection (three-tier)

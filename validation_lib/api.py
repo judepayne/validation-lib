@@ -36,9 +36,7 @@ class ValidationService:
             service.reload_logic()
     """
 
-    # Auto-refresh configuration
-    BUSINESS_CONFIG_MAX_AGE = 1800      # 30 minutes
-    COORDINATION_CONFIG_MAX_AGE = 1800  # 30 minutes
+    # Debounce interval: how often the mid-session staleness check runs (hardcoded, seconds)
     CHECK_INTERVAL = 300                # Check every 5 minutes
 
     def __init__(self):
@@ -49,16 +47,29 @@ class ValidationService:
         1. Loads bundled local-config.yaml
         2. Fetches/caches business logic (rules, schemas, helpers)
         3. Initializes the validation engine
+        4. Reloads logic from source if the disk cache is older than
+           logic_cache_max_age_seconds (from local-config.yaml, default 1800s)
 
         Raises:
             RuntimeError: If config loading or logic fetching fails
         """
         self._initialize()
 
+        # At startup, reload if the on-disk logic cache is stale
+        cache_age = self.logic_fetcher.get_cache_age()
+        if cache_age is not None and cache_age > self._max_age:
+            logger.info(
+                f"Logic cache stale at startup ({cache_age:.0f}s > {self._max_age}s), reloading"
+            )
+            self.reload_logic()
+
     def _initialize(self):
         """Internal initialization logic (used by __init__ and reload_logic)."""
         # Load bundled config
         self.config_loader = ConfigLoader()
+
+        # Read max cache age from config (used at startup and in mid-session checks)
+        self._max_age = self.config_loader.get_logic_cache_max_age()
 
         # Initialize coordination proxy for fetching associated data
         self.coordination_proxy = CoordinationProxy(
@@ -97,18 +108,18 @@ class ValidationService:
 
         # Check business config age
         business_age = self.config_loader.get_business_config_age()
-        if business_age and business_age > self.BUSINESS_CONFIG_MAX_AGE:
+        if business_age and business_age > self._max_age:
             logger.info(
-                f"Business config stale ({business_age:.0f}s > {self.BUSINESS_CONFIG_MAX_AGE}s), reloading"
+                f"Business config stale ({business_age:.0f}s > {self._max_age}s), reloading"
             )
             self.reload_logic()
             return
 
         # Check coordination config age
         coord_age = self.config_loader.get_coordination_config_age()
-        if coord_age and coord_age > self.COORDINATION_CONFIG_MAX_AGE:
+        if coord_age and coord_age > self._max_age:
             logger.info(
-                f"Coordination config stale ({coord_age:.0f}s > {self.COORDINATION_CONFIG_MAX_AGE}s), reloading"
+                f"Coordination config stale ({coord_age:.0f}s > {self._max_age}s), reloading"
             )
             self.reload_logic()
             return
