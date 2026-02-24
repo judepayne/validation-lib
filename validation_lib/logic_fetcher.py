@@ -29,6 +29,7 @@ class LogicPackageFetcher:
         "entity_helpers/read.py",
         "entity_helpers/conversions.py",
         "entity_helpers/write.py",
+        "entity_helpers/convert.py",
     ]
 
     # Hardcoded cache directory for validation-lib
