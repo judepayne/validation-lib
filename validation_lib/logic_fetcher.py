@@ -26,6 +26,9 @@ class LogicPackageFetcher:
         "rules/base.py",
         "entity_helpers/__init__.py",
         "entity_helpers/version_registry.py",
+        "entity_helpers/read.py",
+        "entity_helpers/conversions.py",
+        "entity_helpers/write.py",
     ]
 
     # Hardcoded cache directory for validation-lib
@@ -177,14 +180,22 @@ class LogicPackageFetcher:
         # 3. Helper files from schema_to_helper_mapping
         for _schema_url, helper_ref in business_config.get(
                 'schema_to_helper_mapping', {}).items():
-            module_name = helper_ref.split('.')[0]  # "loan_v1.LoanV1" → "loan_v1"
-            files.add(f"entity_helpers/{module_name}.py")
+            if '.' in helper_ref:
+                # Old format: "loan_v1.LoanV1" → entity_helpers/loan_v1.py
+                module_name = helper_ref.split('.')[0]
+                files.add(f"entity_helpers/{module_name}.py")
+            else:
+                # New format: "loan_v1" → entity_helpers/loan_v1.json
+                files.add(f"entity_helpers/{helper_ref}.json")
 
         # 4. Helper files from default_helpers
         for _entity_type, helper_ref in business_config.get(
                 'default_helpers', {}).items():
-            module_name = helper_ref.split('.')[0]
-            files.add(f"entity_helpers/{module_name}.py")
+            if '.' in helper_ref:
+                module_name = helper_ref.split('.')[0]
+                files.add(f"entity_helpers/{module_name}.py")
+            else:
+                files.add(f"entity_helpers/{helper_ref}.json")
 
         return files
 
