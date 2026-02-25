@@ -153,7 +153,7 @@ class TestValidate:
     def test_status_values(self, service, sample_loan):
         """Test that status values are valid."""
         results = service.validate("loan", sample_loan, "quick")
-        valid_statuses = {'PASS', 'FAIL', 'NORUN', 'ERROR'}
+        valid_statuses = {'PASS', 'FAIL', 'NORUN', 'ERROR', 'WARN'}
 
         for result in results:
             assert result['status'] in valid_statuses

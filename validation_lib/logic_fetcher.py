@@ -161,7 +161,9 @@ class LogicPackageFetcher:
         files = set()
 
         # 1. Structural files (always needed)
-        files.update(LogicPackageFetcher.STRUCTURAL_FILES)
+        # Read from config if present, fall back to hardcoded list
+        structural = business_config.get('structural_files', LogicPackageFetcher.STRUCTURAL_FILES)
+        files.update(structural)
 
         # 2. Rule files from all rulesets
         rulesets = business_config.get('rulesets', {})

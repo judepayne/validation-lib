@@ -137,7 +137,7 @@ class ValidationService:
             List of validation result dicts, each containing:
                 - rule_id: Rule identifier
                 - description: Rule description
-                - status: "PASS", "FAIL", "NORUN", or "ERROR"
+                - status: "PASS", "FAIL", "WARN", "NORUN", or "ERROR"
                 - message: Failure message (if status is FAIL or ERROR)
                 - execution_time_ms: Execution time
                 - children: Nested child rule results (if hierarchical)

@@ -93,8 +93,8 @@ class RuleExecutor:
             "children": []
         }
 
-        # Execute children only if parent passed
-        if status == "PASS" and "children" in config:
+        # Execute children only if parent passed or warned (WARN is a soft pass)
+        if status in ("PASS", "WARN") and "children" in config:
             for child_config in config["children"]:
                 child_result = self._execute_rule(child_config)
                 result["children"].append(child_result)

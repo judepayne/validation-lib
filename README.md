@@ -433,6 +433,13 @@ Logic and remote configs are cached in:
 /tmp/validation-lib/config_*.yaml
 ```
 
+> **Upgrading?** When `business-config.yaml` changes upstream (e.g. new schema mappings or rule IDs),
+> clear the **entire** `/tmp/validation-lib/` directory — not just `logic/` — because the business
+> config is cached separately at `config_{hash}.yaml` and will otherwise shadow the updated version:
+> ```bash
+> rm -rf /tmp/validation-lib/
+> ```
+
 **Manual refresh:**
 ```python
 service.reload_logic()  # Force immediate reload
@@ -549,6 +556,16 @@ This indirection allows:
 This architecture separates data fetching from validation logic, keeping rules focused on business logic.
 
 ## Writing Validation Rules
+
+### Rule Statuses
+
+Each rule returns a `(status, message)` tuple. Valid statuses are:
+
+- `PASS` — rule ran successfully and the check passed; children still run.
+- `WARN` — rule ran successfully but found a condition worth flagging; advisory only, does not constitute a failure; children still run.
+- `FAIL` — rule ran successfully and the check failed.
+- `NORUN` — rule could not run (e.g. required data was unavailable or a parent rule failed); children are skipped.
+- `ERROR` — rule raised an unhandled exception during execution.
 
 Rules are Python classes in `logic/rules/<entity>/`:
 
