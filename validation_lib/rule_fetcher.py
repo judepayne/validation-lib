@@ -5,7 +5,6 @@ import importlib.util
 import urllib.request
 import urllib.parse
 from pathlib import Path
-from typing import Optional
 
 
 class RuleFetcher:
@@ -38,7 +37,7 @@ class RuleFetcher:
         parsed = urllib.parse.urlparse(rule_uri)
 
         # Handle relative paths (backward compat)
-        if not parsed.scheme or parsed.scheme == "":
+        if not parsed.scheme:
             # Relative path - resolve and return
             return Path(rule_uri).resolve()
 
@@ -48,6 +47,8 @@ class RuleFetcher:
             return Path(path).resolve()
 
         # Handle http(s):// URIs - cache them
+        # TODO: Add integrity verification (e.g. hash pinning) before executing
+        # remote code. Currently we trust the HTTPS source blindly.
         if parsed.scheme in ("http", "https"):
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             cache_key = hashlib.sha256(rule_uri.encode()).hexdigest()
@@ -67,10 +68,10 @@ class RuleFetcher:
     def _fetch_uri(self, uri: str) -> str:
         """Fetch content from HTTP/HTTPS URI."""
         try:
-            with urllib.request.urlopen(uri) as response:
+            with urllib.request.urlopen(uri, timeout=10) as response:
                 return response.read().decode("utf-8")
         except Exception as e:
-            raise RuntimeError(f"Failed to fetch rule from {uri}: {e}")
+            raise RuntimeError(f"Failed to fetch rule from {uri}: {e}") from e
 
     def load_rule_module(self, rule_uri: str, rule_id: str):
         """
@@ -88,6 +89,10 @@ class RuleFetcher:
         # Dynamically load module
         module_name = f"rules.dynamic.{rule_id}"
         spec = importlib.util.spec_from_file_location(module_name, rule_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(
+                f"Cannot create module spec for rule {rule_id} at {rule_path}"
+            )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 

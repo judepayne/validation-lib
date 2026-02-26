@@ -27,6 +27,28 @@ class ValidationEngine:
         self.config = config_loader.get_business_config()
         self.logic_dir = Path(logic_dir)
 
+        # Verify logic directory exists BEFORE trying to import from it
+        if not self.logic_dir.exists():
+            raise ValueError(f"Logic directory not found: {logic_dir}")
+
+        # Clean stale logic entries from sys.path and sys.modules on reload
+        stale_paths = [
+            p
+            for p in sys.path
+            if "/validation-lib/" not in p
+            and "/logic" in p
+            and p != str(self.logic_dir)
+        ]
+        for p in stale_paths:
+            sys.path.remove(p)
+        stale_modules = [
+            m
+            for m in sys.modules
+            if m.startswith(("entity_helpers", "rules.", "schema_helpers"))
+        ]
+        for m in stale_modules:
+            del sys.modules[m]
+
         # Add logic_dir to sys.path so entity_helpers and rules can be imported
         if str(self.logic_dir) not in sys.path:
             sys.path.insert(0, str(self.logic_dir))
@@ -38,21 +60,21 @@ class ValidationEngine:
         # Store for later use
         self._create_entity_helper = create_entity_helper
 
-        # Verify logic directory exists
-        if not self.logic_dir.exists():
-            raise ValueError(f"Logic directory not found: {logic_dir}")
-
         # Initialize rule fetcher
         cache_dir = config_loader.cache_dir / "rules"
         self.rule_fetcher = RuleFetcher(cache_dir=str(cache_dir))
 
         # Initialize rule loader with config and fetcher
-        self.rule_loader = RuleLoader(self.config, self.config_loader, self.rule_fetcher)
+        self.rule_loader = RuleLoader(
+            self.config, self.config_loader, self.rule_fetcher
+        )
 
         # Initialize entity helper registry with config_loader
         get_registry(config_loader)
 
-    def get_required_data(self, entity_type: str, schema_url: str, ruleset_name: str) -> List[str]:
+    def get_required_data(
+        self, entity_type: str, schema_url: str, ruleset_name: str
+    ) -> List[str]:
         """
         Phase 1: Introspect rules and return required data.
 
@@ -67,7 +89,9 @@ class ValidationEngine:
             List of vocabulary terms (e.g., ["parent", "all_siblings"])
         """
         # Load rules based on config and ruleset
-        rule_configs = self._get_rules_for_ruleset(entity_type, ruleset_name, schema_url)
+        rule_configs = self._get_rules_for_ruleset(
+            entity_type, ruleset_name, schema_url
+        )
         rules = self.rule_loader.load_rules(rule_configs)
 
         # Collect all required_data from all rules
@@ -77,7 +101,13 @@ class ValidationEngine:
 
         return list(required)
 
-    def validate(self, entity_type: str, entity_data: dict, ruleset_name: str, required_data: dict) -> List[Dict[str, Any]]:
+    def validate(
+        self,
+        entity_type: str,
+        entity_data: dict,
+        ruleset_name: str,
+        required_data: dict,
+    ) -> List[Dict[str, Any]]:
         """
         Phase 2: Execute rules and return hierarchical results.
 
@@ -101,8 +131,10 @@ class ValidationEngine:
             }, ...]
         """
         # Load rules
-        schema_url = entity_data.get('$schema')
-        rule_configs = self._get_rules_for_ruleset(entity_type, ruleset_name, schema_url)
+        schema_url = entity_data.get("$schema")
+        rule_configs = self._get_rules_for_ruleset(
+            entity_type, ruleset_name, schema_url
+        )
         rules = self.rule_loader.load_rules(rule_configs)
 
         # Execute with hierarchy
@@ -112,10 +144,7 @@ class ValidationEngine:
         return results
 
     def discover_rules(
-        self,
-        entity_type: str,
-        entity_data: dict,
-        ruleset_name: str
+        self, entity_type: str, entity_data: dict, ruleset_name: str
     ) -> Dict[str, Dict]:
         """
         Discover all rules and their comprehensive metadata.
@@ -135,10 +164,12 @@ class ValidationEngine:
             - applicable_schemas: List of schema URLs this rule applies to
         """
         # Get schema URL for routing
-        schema_url = entity_data.get('$schema')
+        schema_url = entity_data.get("$schema")
 
         # Load rules for this entity/schema/ruleset
-        rule_configs = self._get_rules_for_ruleset(entity_type, ruleset_name, schema_url)
+        rule_configs = self._get_rules_for_ruleset(
+            entity_type, ruleset_name, schema_url
+        )
         rules = self.rule_loader.load_rules(rule_configs)
 
         # Build comprehensive metadata for each rule
@@ -150,6 +181,7 @@ class ValidationEngine:
             # Create entity helper with access tracking
             # Import here since it's only available after logic_dir is in sys.path
             from entity_helpers import create_entity_helper
+
             helper = create_entity_helper(entity_type, entity_data, track_access=True)
 
             # Execute rule to capture field accesses
@@ -157,7 +189,7 @@ class ValidationEngine:
             rule.set_required_data({})
             try:
                 rule.run()  # Execute to trigger field accesses
-            except:
+            except Exception:
                 pass  # Ignore errors - we only care about field access patterns
 
             # Collect metadata
@@ -167,7 +199,9 @@ class ValidationEngine:
                 "description": rule.description(),
                 "required_data": rule.required_data(),
                 "field_dependencies": helper.get_accesses(),
-                "applicable_schemas": self._get_applicable_schemas(rule_id, entity_type, ruleset_name)
+                "applicable_schemas": self._get_applicable_schemas(
+                    rule_id, entity_type, ruleset_name
+                ),
             }
 
         return result
@@ -181,18 +215,15 @@ class ValidationEngine:
             - metadata: Dict with description, purpose, author, date
             - stats: Dict with rules_by_schema, total_rules, supported_entities, supported_schemas
         """
-        rulesets_config = self.config.get('rulesets', {})
+        rulesets_config = self.config.get("rulesets", {})
         result = {}
 
         for ruleset_name, ruleset_data in rulesets_config.items():
-            metadata = ruleset_data.get('metadata', {}).copy()
-            rules_section = ruleset_data.get('rules', {})
+            metadata = ruleset_data.get("metadata", {}).copy()
+            rules_section = ruleset_data.get("rules", {})
             stats = self._compute_ruleset_stats(rules_section)
 
-            result[ruleset_name] = {
-                "metadata": metadata,
-                "stats": stats
-            }
+            result[ruleset_name] = {"metadata": metadata, "stats": stats}
 
         return result
 
@@ -229,7 +260,7 @@ class ValidationEngine:
             "rules_by_schema": rules_by_schema,
             "total_rules": total_rules,
             "supported_entities": sorted(list(supported_entities)),
-            "supported_schemas": supported_schemas
+            "supported_schemas": supported_schemas,
         }
 
     def _count_rules_recursive(self, rules_list: List[Dict]) -> int:
@@ -245,8 +276,8 @@ class ValidationEngine:
         count = len(rules_list)
 
         for rule_config in rules_list:
-            if 'children' in rule_config:
-                count += self._count_rules_recursive(rule_config['children'])
+            if "children" in rule_config:
+                count += self._count_rules_recursive(rule_config["children"])
 
         return count
 
@@ -264,17 +295,19 @@ class ValidationEngine:
         """
         try:
             # Schema URLs typically have format: .../schemas/{entity_type}/v{version}
-            if '/schemas/' in schema_url:
-                parts = schema_url.split('/schemas/')
+            if "/schemas/" in schema_url:
+                parts = schema_url.split("/schemas/")
                 if len(parts) >= 2:
-                    entity_part = parts[1].split('/')[0]
+                    entity_part = parts[1].split("/")[0]
                     return entity_part
         except Exception:
             pass
 
         return ""
 
-    def _get_applicable_schemas(self, rule_id: str, entity_type: str, ruleset_name: str) -> List[str]:
+    def _get_applicable_schemas(
+        self, rule_id: str, entity_type: str, ruleset_name: str
+    ) -> List[str]:
         """
         Find all schema URLs that include this rule.
 
@@ -286,19 +319,32 @@ class ValidationEngine:
         Returns:
             List of schema URLs where this rule is configured
         """
-        rules_config = self.config.get('rulesets', {}).get(ruleset_name, {}).get('rules', {})
+        rules_config = (
+            self.config.get("rulesets", {}).get(ruleset_name, {}).get("rules", {})
+        )
         applicable = []
 
         for key, rule_list in rules_config.items():
             # Check if this is a schema URL (not just entity type)
             if key.startswith("http"):
-                # Check if rule_id is in this schema's rule list
-                if any(r.get('rule_id') == rule_id for r in rule_list):
+                # Check if rule_id is in this schema's rule list (recursing into children)
+                if self._rule_in_list(rule_id, rule_list):
                     applicable.append(key)
 
         return applicable
 
-    def _get_rules_for_ruleset(self, entity_type: str, ruleset_name: str, schema_url: str = None) -> List[Dict[str, Any]]:
+    def _rule_in_list(self, rule_id: str, rule_list: List[Dict]) -> bool:
+        """Check if rule_id appears anywhere in a rule list, including nested children."""
+        for r in rule_list:
+            if r.get("rule_id") == rule_id:
+                return True
+            if "children" in r and self._rule_in_list(rule_id, r["children"]):
+                return True
+        return False
+
+    def _get_rules_for_ruleset(
+        self, entity_type: str, ruleset_name: str, schema_url: str = None
+    ) -> List[Dict[str, Any]]:
         """
         Extract rule configs for given entity type, rule set, and optional schema version.
 
@@ -310,7 +356,9 @@ class ValidationEngine:
         Returns:
             List of rule config dicts from config file
         """
-        rules_config = self.config.get('rulesets', {}).get(ruleset_name, {}).get('rules', {})
+        rules_config = (
+            self.config.get("rulesets", {}).get(ruleset_name, {}).get("rules", {})
+        )
 
         # Try schema_url first (version-specific)
         if schema_url and schema_url in rules_config:

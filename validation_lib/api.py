@@ -3,6 +3,7 @@ Public API for validation-lib
 
 This is the "front door" - the main entry point for all validation operations.
 """
+
 import time
 import logging
 from .config_loader import ConfigLoader
@@ -37,7 +38,7 @@ class ValidationService:
     """
 
     # Debounce interval: how often the mid-session staleness check runs (hardcoded, seconds)
-    CHECK_INTERVAL = 300                # Check every 5 minutes
+    CHECK_INTERVAL = 300  # Check every 5 minutes
 
     def __init__(self):
         """
@@ -84,8 +85,7 @@ class ValidationService:
 
         # Initialize validation engine
         self.engine = ValidationEngine(
-            config_loader=self.config_loader,
-            logic_dir=logic_dir
+            config_loader=self.config_loader, logic_dir=logic_dir
         )
 
         # Track last freshness check time
@@ -162,10 +162,12 @@ class ValidationService:
         self._check_and_reload_if_stale()
 
         # Get schema URL from entity data
-        schema_url = entity_data.get('$schema', '')
+        schema_url = entity_data.get("$schema", "")
 
         # Phase 1: Get required data for this validation
-        required_terms = self.engine.get_required_data(entity_type, schema_url, ruleset_name)
+        required_terms = self.engine.get_required_data(
+            entity_type, schema_url, ruleset_name
+        )
 
         # Phase 2: Fetch required data from coordination service
         required_data = self.coordination_proxy.get_associated_data(
@@ -173,7 +175,9 @@ class ValidationService:
         )
 
         # Phase 3: Execute validation
-        return self.engine.validate(entity_type, entity_data, ruleset_name, required_data)
+        return self.engine.validate(
+            entity_type, entity_data, ruleset_name, required_data
+        )
 
     def discover_rules(self, entity_type, entity_data, ruleset_name):
         """
@@ -269,25 +273,31 @@ class ValidationService:
             entity_type = self._determine_entity_type(entity)
 
             # Get schema URL
-            schema_url = entity.get('$schema', '')
+            schema_url = entity.get("$schema", "")
 
             # Get required data for this validation
-            required_terms = self.engine.get_required_data(entity_type, schema_url, ruleset_name)
+            required_terms = self.engine.get_required_data(
+                entity_type, schema_url, ruleset_name
+            )
             required_data = self.coordination_proxy.get_associated_data(
                 entity_type, entity, required_terms
             )
 
             # Validate the entity
-            validation_results = self.engine.validate(entity_type, entity, ruleset_name, required_data)
+            validation_results = self.engine.validate(
+                entity_type, entity, ruleset_name, required_data
+            )
 
             # Extract entity ID
             entity_id = self._extract_id(entity, id_fields)
 
-            results.append({
-                'entity_id': entity_id,
-                'entity_type': entity_type,
-                'results': validation_results
-            })
+            results.append(
+                {
+                    "entity_id": entity_id,
+                    "entity_type": entity_type,
+                    "results": validation_results,
+                }
+            )
 
         return results
 
@@ -395,15 +405,15 @@ class ValidationService:
             ValueError: If entity type cannot be determined
         """
         # Strategy 1: Extract from $schema URL
-        schema_url = entity.get('$schema')
+        schema_url = entity.get("$schema")
         if schema_url:
             entity_type = self._extract_entity_type_from_schema(schema_url)
             if entity_type:
                 return entity_type
 
         # Strategy 2: Explicit entity_type field
-        if 'entity_type' in entity:
-            return entity['entity_type']
+        if "entity_type" in entity:
+            return entity["entity_type"]
 
         # Strategy 3: Try to infer from known schemas
         # (Could check schema_to_helper_mapping in config)
@@ -424,17 +434,20 @@ class ValidationService:
         Returns:
             Entity type string, or None if cannot extract
         """
-        if not schema_url or not schema_url.startswith('http'):
+        from urllib.parse import urlparse as _urlparse
+
+        if not schema_url or _urlparse(schema_url).scheme not in ("http", "https"):
             return None
 
         # Parse URL path: .../schemas/loan/v1.0.0 → "loan"
         from urllib.parse import urlparse
+
         path = urlparse(schema_url).path
-        segments = [s for s in path.split('/') if s]
+        segments = [s for s in path.split("/") if s]
 
         # Look for version-like segment and take the one before it
         for i, segment in enumerate(segments):
-            if segment.startswith('v') and '.' in segment:
+            if segment.startswith("v") and "." in segment:
                 if i > 0:
                     return segments[i - 1]
 
@@ -486,18 +499,25 @@ class ValidationService:
         import urllib.request
         from urllib.parse import urlparse
 
+        MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
         parsed = urlparse(file_uri)
 
         try:
-            if parsed.scheme == 'file':
+            if parsed.scheme == "file":
                 # Local file
                 file_path = urllib.parse.unquote(parsed.path)
                 with open(file_path) as f:
                     data = json.load(f)
-            elif parsed.scheme in ('http', 'https'):
-                # Remote file
-                with urllib.request.urlopen(file_uri) as response:
-                    data = json.loads(response.read().decode('utf-8'))
+            elif parsed.scheme in ("http", "https"):
+                # Remote file — with timeout and bounded read
+                with urllib.request.urlopen(file_uri, timeout=30) as response:
+                    raw = response.read(MAX_FILE_SIZE + 1)
+                    if len(raw) > MAX_FILE_SIZE:
+                        raise RuntimeError(
+                            f"Remote file exceeds {MAX_FILE_SIZE // (1024 * 1024)} MB limit"
+                        )
+                    data = json.loads(raw.decode("utf-8"))
             else:
                 raise ValueError(f"Unsupported URI scheme: {parsed.scheme}")
 
@@ -507,5 +527,7 @@ class ValidationService:
             else:
                 return [data]
 
+        except RuntimeError:
+            raise
         except Exception as e:
-            raise RuntimeError(f"Failed to load entities from {file_uri}: {e}")
+            raise RuntimeError(f"Failed to load entities from {file_uri}: {e}") from e

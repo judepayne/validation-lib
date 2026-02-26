@@ -27,14 +27,14 @@ class RuleExecutor:
 
         if entity_type:
             self.entity_helper = create_entity_helper(
-                entity_type,
-                entity_data,
-                track_access=False
+                entity_type, entity_data, track_access=False
             )
         else:
             self.entity_helper = None
 
-    def execute_hierarchical(self, rule_configs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def execute_hierarchical(
+        self, rule_configs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Execute rules respecting hierarchical dependencies.
 
@@ -62,7 +62,7 @@ class RuleExecutor:
                 "status": "NORUN",
                 "message": f"Rule {rule_id} not found",
                 "execution_time_ms": 0,
-                "children": []
+                "children": [],
             }
 
         # Inject entity helper for domain-aware data access
@@ -90,7 +90,7 @@ class RuleExecutor:
             "status": status,
             "message": message,
             "execution_time_ms": elapsed_ms,
-            "children": []
+            "children": [],
         }
 
         # Execute children only if parent passed or warned (WARN is a soft pass)
@@ -98,8 +98,8 @@ class RuleExecutor:
             for child_config in config["children"]:
                 child_result = self._execute_rule(child_config)
                 result["children"].append(child_result)
-        elif status in ["FAIL", "NORUN"] and "children" in config:
-            # Mark children as NORUN since parent didn't pass
+        elif "children" in config:
+            # FAIL, NORUN, or ERROR — mark children as NORUN
             for child_config in config["children"]:
                 result["children"].append(self._mark_skipped(child_config))
 
@@ -116,7 +116,7 @@ class RuleExecutor:
             "status": "NORUN",
             "message": "Parent rule did not pass, rule skipped",
             "execution_time_ms": 0,
-            "children": []
+            "children": [],
         }
 
         # Recursively mark children

@@ -141,14 +141,8 @@ class LogicPackageFetcher:
             cache_path = self.cache_dir / rel_path
             cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-            try:
-                content = self._fetch_uri(file_url)
-                cache_path.write_text(content)
-            except RuntimeError as e:
-                # Log but don't fail — some files may be optional
-                import sys
-
-                print(f"Warning: Failed to fetch {file_url}: {e}", file=sys.stderr)
+            content = self._fetch_uri(file_url)
+            cache_path.write_text(content)
 
         return str(self.cache_dir)
 
@@ -259,10 +253,10 @@ class LogicPackageFetcher:
     def _fetch_uri(self, uri: str) -> str:
         """Fetch content from HTTP/HTTPS URI."""
         try:
-            with urllib.request.urlopen(uri) as response:
+            with urllib.request.urlopen(uri, timeout=10) as response:
                 return response.read().decode("utf-8")
         except Exception as e:
-            raise RuntimeError(f"Failed to fetch {uri}: {e}")
+            raise RuntimeError(f"Failed to fetch {uri}: {e}") from e
 
     def get_cache_age(self) -> Optional[float]:
         """Get age of cached logic in seconds.

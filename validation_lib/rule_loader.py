@@ -52,8 +52,8 @@ class RuleLoader:
         self.loaded_rules = {}  # Cache: rule_id -> rule_class
 
         # Backward compatibility: support master_rules_directory
-        if 'master_rules_directory' in config:
-            self.rules_dir = Path(config['master_rules_directory'])
+        if "master_rules_directory" in config:
+            self.rules_dir = Path(config["master_rules_directory"])
         else:
             # New mode: rules fetched via URIs
             self.rules_dir = None
@@ -115,7 +115,7 @@ class RuleLoader:
             try:
                 # Import directly - logic_dir is in sys.path so this works
                 module = importlib.import_module(module_name)
-            except ModuleNotFoundError as e:
+            except ModuleNotFoundError as original_error:
                 # Try other entity types if inference was wrong
                 for alt_entity in ["loan", "facility", "deal"]:
                     if alt_entity != entity_type:
@@ -128,9 +128,9 @@ class RuleLoader:
                             continue
                 else:
                     raise ImportError(
-                        f"Failed to import rule {rule_id}: {e}\n"
+                        f"Failed to import rule {rule_id}: {original_error}\n"
                         f"Tried: rules.{entity_type}.{rule_id} and other entity types"
-                    )
+                    ) from original_error
 
         else:
             # Backward compat mode: search local rules_dir
@@ -148,8 +148,7 @@ class RuleLoader:
 
             if rule_file is None:
                 raise FileNotFoundError(
-                    f"Rule file not found: {rule_id}. "
-                    f"Searched: {', '.join(searched)}"
+                    f"Rule file not found: {rule_id}. Searched: {', '.join(searched)}"
                 )
 
             # Load module
@@ -184,31 +183,34 @@ class RuleLoader:
         Infer entity type by searching rule configs.
 
         Looks through all rulesets to find which entity type contains this rule.
+        For schema URL keys, the entity type is extracted from the URL using
+        LogicPackageFetcher._extract_entity_type.
         """
-        rulesets = self.config.get('rulesets', {})
+        from .logic_fetcher import LogicPackageFetcher
+
+        rulesets = self.config.get("rulesets", {})
         for ruleset_name, ruleset_data in rulesets.items():
-            rules_section = ruleset_data.get('rules', {})
+            rules_section = ruleset_data.get("rules", {})
             for key, rules_list in rules_section.items():
                 if self._rule_in_list(rule_id, rules_list):
                     # Found rule - key might be schema URL or entity type
-                    if key.startswith('http'):
-                        # Schema URL - default to 'loan' for now
-                        # In a real system, we'd map schema to entity type
-                        return 'loan'
+                    if key.startswith("http"):
+                        return LogicPackageFetcher._extract_entity_type(key)
                     else:
                         return key  # Entity type directly
 
-        # Default fallback
-        return 'loan'
+        raise ImportError(
+            f"Cannot infer entity type for rule {rule_id}: "
+            f"rule not found in any ruleset configuration"
+        )
 
     def _rule_in_list(self, rule_id: str, rules_list: list) -> bool:
         """Check if rule_id exists in rules list (including nested children)"""
         for rule in rules_list:
-            if rule.get('rule_id') == rule_id:
+            if rule.get("rule_id") == rule_id:
                 return True
             # Check children recursively
-            if 'children' in rule:
-                if self._rule_in_list(rule_id, rule['children']):
+            if "children" in rule:
+                if self._rule_in_list(rule_id, rule["children"]):
                     return True
         return False
-
