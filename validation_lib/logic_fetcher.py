@@ -30,6 +30,8 @@ class LogicPackageFetcher:
         "entity_helpers/conversions.py",
         "entity_helpers/write.py",
         "entity_helpers/convert.py",
+        "schema_helpers/__init__.py",
+        "schema_helpers/schema_loader.py",
     ]
 
     # Hardcoded cache directory for validation-lib
@@ -58,12 +60,16 @@ class LogicPackageFetcher:
 
         # Get business_config_uri - construct from new structure or use legacy direct value
         logic_dir_location = local_config.get("logic_directory_location")
-        business_config_filename = local_config.get("business_config_filename", "business-config.yaml")
+        business_config_filename = local_config.get(
+            "business_config_filename", "business-config.yaml"
+        )
 
         if logic_dir_location:
             # New structure: construct URI from logic_directory_location + business_config_filename
-            separator = '/' if not logic_dir_location.endswith('/') else ''
-            business_config_uri = f"{logic_dir_location}{separator}{business_config_filename}"
+            separator = "/" if not logic_dir_location.endswith("/") else ""
+            business_config_uri = (
+                f"{logic_dir_location}{separator}{business_config_filename}"
+            )
         else:
             # Backward compatibility: direct business_config_uri
             business_config_uri = local_config.get("business_config_uri")
@@ -75,21 +81,22 @@ class LogicPackageFetcher:
         # Determine if local or remote
         parsed = urllib.parse.urlparse(business_config_uri)
 
-        if not parsed.scheme or parsed.scheme == 'file':
+        if not parsed.scheme or parsed.scheme == "file":
             # Local path — resolve to absolute directory
             return self._resolve_local(business_config_uri, local_config_path)
-        elif parsed.scheme in ('http', 'https'):
+        elif parsed.scheme in ("http", "https"):
             # Remote URL — fetch into cache
             return self._resolve_remote(business_config_uri)
         else:
             raise ValueError(
-                f"Unsupported URI scheme: {parsed.scheme} in {business_config_uri}")
+                f"Unsupported URI scheme: {parsed.scheme} in {business_config_uri}"
+            )
 
     def _resolve_local(self, uri: str, local_config_path: str) -> str:
         """Resolve local business_config_uri to logic directory path."""
         parsed = urllib.parse.urlparse(uri)
 
-        if parsed.scheme == 'file':
+        if parsed.scheme == "file":
             # file:// URI — extract path
             config_file = urllib.parse.unquote(parsed.path)
         else:
@@ -110,9 +117,9 @@ class LogicPackageFetcher:
             Path to cached logic directory
         """
         # Base URI = business_config_uri minus the filename
-        base_uri = business_config_uri.rsplit('/', 1)[0]
-        if not base_uri.endswith('/'):
-            base_uri += '/'
+        base_uri = business_config_uri.rsplit("/", 1)[0]
+        if not base_uri.endswith("/"):
+            base_uri += "/"
 
         # Load the business config (fetch it)
         config_content = self._fetch_uri(business_config_uri)
@@ -140,8 +147,8 @@ class LogicPackageFetcher:
             except RuntimeError as e:
                 # Log but don't fail — some files may be optional
                 import sys
-                print(f"Warning: Failed to fetch {file_url}: {e}",
-                      file=sys.stderr)
+
+                print(f"Warning: Failed to fetch {file_url}: {e}", file=sys.stderr)
 
         return str(self.cache_dir)
 
@@ -162,19 +169,20 @@ class LogicPackageFetcher:
 
         # 1. Structural files (always needed)
         # Read from config if present, fall back to hardcoded list
-        structural = business_config.get('structural_files', LogicPackageFetcher.STRUCTURAL_FILES)
+        structural = business_config.get(
+            "structural_files", LogicPackageFetcher.STRUCTURAL_FILES
+        )
         files.update(structural)
 
         # 2. Rule files from all rulesets
-        rulesets = business_config.get('rulesets', {})
+        rulesets = business_config.get("rulesets", {})
         for ruleset_name, ruleset_data in rulesets.items():
-            rules_section = ruleset_data.get('rules', {})
+            rules_section = ruleset_data.get("rules", {})
             for schema_or_type, rules_list in rules_section.items():
                 if not isinstance(rules_list, list):
                     continue
                 # Extract entity type from schema URL or use key directly
-                entity_type = LogicPackageFetcher._extract_entity_type(
-                    schema_or_type)
+                entity_type = LogicPackageFetcher._extract_entity_type(schema_or_type)
                 # Collect rule IDs (including nested children)
                 rule_ids = LogicPackageFetcher._collect_rule_ids(rules_list)
                 for rule_id in rule_ids:
@@ -182,10 +190,11 @@ class LogicPackageFetcher:
 
         # 3. Helper files from schema_to_helper_mapping
         for _schema_url, helper_ref in business_config.get(
-                'schema_to_helper_mapping', {}).items():
-            if '.' in helper_ref:
+            "schema_to_helper_mapping", {}
+        ).items():
+            if "." in helper_ref:
                 # Old format: "loan_v1.LoanV1" → entity_helpers/loan_v1.py
-                module_name = helper_ref.split('.')[0]
+                module_name = helper_ref.split(".")[0]
                 files.add(f"entity_helpers/{module_name}.py")
             else:
                 # New format: "loan_v1" → entity_helpers/loan_v1.json
@@ -193,9 +202,10 @@ class LogicPackageFetcher:
 
         # 4. Helper files from default_helpers
         for _entity_type, helper_ref in business_config.get(
-                'default_helpers', {}).items():
-            if '.' in helper_ref:
-                module_name = helper_ref.split('.')[0]
+            "default_helpers", {}
+        ).items():
+            if "." in helper_ref:
+                module_name = helper_ref.split(".")[0]
                 files.add(f"entity_helpers/{module_name}.py")
             else:
                 files.add(f"entity_helpers/{helper_ref}.json")
@@ -212,27 +222,27 @@ class LogicPackageFetcher:
             "loan" → "loan"
             "facility" → "facility"
         """
-        if schema_or_type.startswith('http'):
+        if schema_or_type.startswith("http"):
             path = urllib.parse.urlparse(schema_or_type).path
-            segments = [s for s in path.split('/') if s]
+            segments = [s for s in path.split("/") if s]
 
             # Filename-based versioning: loan.schema.v1.0.0.json → "loan"
-            if segments and segments[-1].endswith('.json'):
+            if segments and segments[-1].endswith(".json"):
                 filename = segments[-1]
-                entity_type = filename.split('.')[0]
+                entity_type = filename.split(".")[0]
                 if entity_type:
                     return entity_type
 
             # Path-based versioning: .../schemas/loan/v1.0.0 → "loan"
             for i, segment in enumerate(segments):
-                if segment.startswith('v') and '.' in segment:
+                if segment.startswith("v") and "." in segment:
                     if i > 0:
                         return segments[i - 1]
 
             # Fallback: second-to-last segment
             if len(segments) >= 2:
                 return segments[-2]
-            return segments[-1] if segments else 'unknown'
+            return segments[-1] if segments else "unknown"
         return schema_or_type
 
     @staticmethod
@@ -240,18 +250,17 @@ class LogicPackageFetcher:
         """Recursively collect all rule_ids from a rules list, including children."""
         ids = set()
         for rule in rules_list:
-            if isinstance(rule, dict) and 'rule_id' in rule:
-                ids.add(rule['rule_id'])
-                if 'children' in rule:
-                    ids.update(
-                        LogicPackageFetcher._collect_rule_ids(rule['children']))
+            if isinstance(rule, dict) and "rule_id" in rule:
+                ids.add(rule["rule_id"])
+                if "children" in rule:
+                    ids.update(LogicPackageFetcher._collect_rule_ids(rule["children"]))
         return ids
 
     def _fetch_uri(self, uri: str) -> str:
         """Fetch content from HTTP/HTTPS URI."""
         try:
             with urllib.request.urlopen(uri) as response:
-                return response.read().decode('utf-8')
+                return response.read().decode("utf-8")
         except Exception as e:
             raise RuntimeError(f"Failed to fetch {uri}: {e}")
 
