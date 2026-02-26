@@ -19,7 +19,7 @@ class RuleFetcher:
             cache_dir: Directory for caching rule files
         """
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Directory is created lazily — only when a remote rule is actually fetched.
 
     def fetch_rule(self, rule_uri: str) -> Path:
         """
@@ -38,17 +38,18 @@ class RuleFetcher:
         parsed = urllib.parse.urlparse(rule_uri)
 
         # Handle relative paths (backward compat)
-        if not parsed.scheme or parsed.scheme == '':
+        if not parsed.scheme or parsed.scheme == "":
             # Relative path - resolve and return
             return Path(rule_uri).resolve()
 
         # Handle file:// URIs
-        if parsed.scheme == 'file':
+        if parsed.scheme == "file":
             path = urllib.parse.unquote(parsed.path)
             return Path(path).resolve()
 
         # Handle http(s):// URIs - cache them
-        if parsed.scheme in ('http', 'https'):
+        if parsed.scheme in ("http", "https"):
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
             cache_key = hashlib.sha256(rule_uri.encode()).hexdigest()
             cache_path = self.cache_dir / f"{cache_key}.py"
 
@@ -67,7 +68,7 @@ class RuleFetcher:
         """Fetch content from HTTP/HTTPS URI."""
         try:
             with urllib.request.urlopen(uri) as response:
-                return response.read().decode('utf-8')
+                return response.read().decode("utf-8")
         except Exception as e:
             raise RuntimeError(f"Failed to fetch rule from {uri}: {e}")
 
