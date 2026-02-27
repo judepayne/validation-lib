@@ -434,14 +434,12 @@ class ValidationService:
         Returns:
             Entity type string, or None if cannot extract
         """
-        from urllib.parse import urlparse as _urlparse
+        from urllib.parse import urlparse
 
-        if not schema_url or _urlparse(schema_url).scheme not in ("http", "https"):
+        if not schema_url or urlparse(schema_url).scheme not in ("http", "https"):
             return None
 
         # Parse URL path: .../schemas/loan/v1.0.0 → "loan"
-        from urllib.parse import urlparse
-
         path = urlparse(schema_url).path
         segments = [s for s in path.split("/") if s]
 
@@ -497,7 +495,8 @@ class ValidationService:
         """
         import json
         import urllib.request
-        from urllib.parse import urlparse
+        from pathlib import Path
+        from urllib.parse import urlparse, unquote
 
         MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
@@ -505,8 +504,12 @@ class ValidationService:
 
         try:
             if parsed.scheme == "file":
-                # Local file
-                file_path = urllib.parse.unquote(parsed.path)
+                # Local file — resolve to canonical path to prevent traversal via encoded '..'
+                file_path = Path(unquote(parsed.path)).resolve()
+                if not file_path.is_file():
+                    raise ValueError(
+                        f"File not found or not a regular file: {file_path}"
+                    )
                 with open(file_path) as f:
                     data = json.load(f)
             elif parsed.scheme in ("http", "https"):
