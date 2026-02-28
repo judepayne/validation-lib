@@ -20,6 +20,26 @@ coordination_service_config_uri: "coordination-service-config.yaml"
 logic_cache_max_age_seconds: 1800
 ```
 
+### Batch parallelism
+
+Two optional keys control parallel batch validation:
+
+```yaml
+# Enable parallel batch processing (default: false — opt-in)
+batch_parallelism: false
+
+# Number of worker processes (omit or null = os.cpu_count(); ignored when batch_parallelism is false)
+batch_max_workers: 4
+```
+
+When `batch_parallelism: true`, `batch_validate()` and `batch_file_validate()` distribute entities across a `ProcessPoolExecutor` worker pool. Each worker runs its own `ValidationService` instance, so there is no shared state between workers. Results are always returned in input order.
+
+Set `batch_parallelism: false` (the default) to use the original sequential code path with no worker processes — useful for debugging, environments where multiprocessing is unavailable, or workloads where batches are consistently small.
+
+See [Production — Batch parallelism](PRODUCTION.md) for performance characteristics and lifecycle notes.
+
+---
+
 The `business_config_uri` is the key indirection point. It can point to:
 
 | Value | Mode | Use case |

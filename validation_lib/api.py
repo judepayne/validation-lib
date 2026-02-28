@@ -4,14 +4,82 @@ Public API for validation-lib
 This is the "front door" - the main entry point for all validation operations.
 """
 
+import os
 import time
 import logging
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from typing import Optional
+
 from .config_loader import ConfigLoader
 from .logic_fetcher import LogicPackageFetcher
 from .validation_engine import ValidationEngine
 from .coordination_proxy import CoordinationProxy
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Module-level worker state and task functions
+#
+# These must live at module level (not inside the class) so they are picklable
+# by the multiprocessing 'spawn' context used for ProcessPoolExecutor workers.
+# ---------------------------------------------------------------------------
+
+# One ValidationService instance per worker process, created by _init_worker().
+_worker_service: Optional["ValidationService"] = None
+
+
+def _init_worker() -> None:
+    """
+    Worker process initializer for ProcessPoolExecutor.
+
+    Creates a single ValidationService in worker mode for this process.
+    Worker mode disables auto-refresh so workers never touch the shared
+    /tmp cache independently — only the main process manages cache freshness.
+    Called once per worker process at pool creation time.
+    """
+    global _worker_service
+    _worker_service = ValidationService(_worker_mode=True)
+
+
+def _validate_entity(entity: dict, id_fields: list, ruleset_name: str) -> dict:
+    """
+    Per-entity validation task executed in a worker process.
+
+    Replicates the per-entity logic from batch_validate(), using the
+    worker-local ValidationService instance. Must be a module-level function
+    to be picklable by the spawn context.
+
+    Args:
+        entity: Entity data dict.
+        id_fields: Field names used to build the entity identifier.
+        ruleset_name: Ruleset to run.
+
+    Returns:
+        Per-entity result dict with entity_id, entity_type, and results.
+    """
+    global _worker_service
+    assert _worker_service is not None, (
+        "_validate_entity called outside a worker process — "
+        "_worker_service was not initialised by _init_worker()"
+    )
+    entity_type = _worker_service._determine_entity_type(entity)
+    schema_url = entity.get("$schema", "")
+    required_terms = _worker_service.engine.get_required_data(
+        entity_type, schema_url, ruleset_name
+    )
+    required_data = _worker_service.coordination_proxy.get_associated_data(
+        entity_type, entity, required_terms
+    )
+    validation_results = _worker_service.engine.validate(
+        entity_type, entity, ruleset_name, required_data
+    )
+    entity_id = _worker_service._extract_id(entity, id_fields)
+    return {
+        "entity_id": entity_id,
+        "entity_type": entity_type,
+        "results": validation_results,
+    }
 
 
 class ValidationService:
@@ -40,7 +108,7 @@ class ValidationService:
     # Debounce interval: how often the mid-session staleness check runs (hardcoded, seconds)
     CHECK_INTERVAL = 300  # Check every 5 minutes
 
-    def __init__(self):
+    def __init__(self, _worker_mode: bool = False):
         """
         Initialize validation service with bundled configuration.
 
@@ -50,19 +118,34 @@ class ValidationService:
         3. Initializes the validation engine
         4. Reloads logic from source if the disk cache is older than
            logic_cache_max_age_seconds (from local-config.yaml, default 1800s)
+        5. Creates the worker process pool if batch_parallelism is enabled
+           (skipped when _worker_mode=True)
+
+        Args:
+            _worker_mode: Internal flag — set True only by _init_worker() when
+                creating a ValidationService inside a pool worker process. Disables
+                auto-refresh and pool creation so workers never touch the shared
+                cache independently.
 
         Raises:
             RuntimeError: If config loading or logic fetching fails
         """
+        self._worker_mode = _worker_mode
+        self._pool: Optional[ProcessPoolExecutor] = None
         self._initialize()
 
-        # At startup, reload if the on-disk logic cache is stale
-        cache_age = self.logic_fetcher.get_cache_age()
-        if cache_age is not None and cache_age > self._max_age:
-            logger.info(
-                f"Logic cache stale at startup ({cache_age:.0f}s > {self._max_age}s), reloading"
-            )
-            self.reload_logic()
+        # At startup, reload if the on-disk logic cache is stale.
+        # Skipped in worker mode — workers trust the cache as-is.
+        if not self._worker_mode:
+            cache_age = self.logic_fetcher.get_cache_age()
+            if cache_age is not None and cache_age > self._max_age:
+                logger.info(
+                    f"Logic cache stale at startup ({cache_age:.0f}s > {self._max_age}s), reloading"
+                )
+                self.reload_logic()
+                return  # reload_logic() calls _create_pool(); don't double-create
+
+        self._create_pool()
 
     def _initialize(self):
         """Internal initialization logic (used by __init__ and reload_logic)."""
@@ -91,13 +174,47 @@ class ValidationService:
         # Track last freshness check time
         self._last_check_time = time.time()
 
+    def _create_pool(self) -> None:
+        """
+        Create the ProcessPoolExecutor worker pool for batch validation.
+
+        No-op when:
+        - Running in worker mode (_worker_mode=True)
+        - batch_parallelism is false in local-config.yaml
+
+        Uses an explicit 'spawn' context for cross-platform safety. On Linux
+        the default is 'fork', which can cause deadlocks when the host process
+        uses threads (e.g. the MCP server). 'spawn' is consistent on all
+        platforms and avoids this class of issue.
+
+        Workers are lazy — they are not actually spawned until the first
+        submit() call, so pool creation itself is near-instant.
+        """
+        if self._worker_mode:
+            return
+        if not self.config_loader.get_batch_parallelism():
+            return
+        max_workers = self.config_loader.get_batch_max_workers()
+        ctx = multiprocessing.get_context("spawn")
+        self._pool = ProcessPoolExecutor(
+            max_workers=max_workers,  # None → os.cpu_count()
+            mp_context=ctx,
+            initializer=_init_worker,
+        )
+        logger.debug(
+            f"Batch worker pool created (max_workers={max_workers or os.cpu_count()})"
+        )
+
     def _check_and_reload_if_stale(self):
         """
         Check config freshness and reload if stale (debounced).
 
         Checks at most every CHECK_INTERVAL seconds.
         Reloads if business config or coordination config exceeds max age.
+        No-op in worker mode — workers never manage cache freshness.
         """
+        if self._worker_mode:
+            return
         now = time.time()
 
         # Debounce: Only check every CHECK_INTERVAL seconds
@@ -267,6 +384,17 @@ class ValidationService:
         # Auto-refresh stale configs
         self._check_and_reload_if_stale()
 
+        if self._pool is not None:
+            # Parallel path: distribute entities across worker processes.
+            # Futures are submitted and collected in input order, preserving
+            # result ordering regardless of which worker finishes first.
+            futures = [
+                self._pool.submit(_validate_entity, entity, id_fields, ruleset_name)
+                for entity in entities
+            ]
+            return [f.result() for f in futures]
+
+        # Sequential fallback: pool disabled or batch_parallelism is false.
         results = []
         for entity in entities:
             # Determine entity type from $schema or other hints
@@ -358,11 +486,22 @@ class ValidationService:
             if service.get_cache_age() > 3600:  # Older than 1 hour
                 service.reload_logic()
         """
+        # Shut down the worker pool before clearing the cache.
+        # shutdown(wait=True) blocks until any in-flight batch completes,
+        # ensuring no worker is mid-validation when the cache is wiped.
+        if self._pool is not None:
+            self._pool.shutdown(wait=True)
+            self._pool = None
+
         # Clear cache
         self.logic_fetcher.clear_cache()
 
         # Re-initialize everything
         self._initialize()
+
+        # Recreate the pool so workers pick up the fresh logic from the
+        # newly populated cache.
+        self._create_pool()
 
     def get_cache_age(self):
         """
@@ -475,6 +614,25 @@ class ValidationService:
             return "unknown"
 
         return "-".join(id_parts)
+
+    def close(self) -> None:
+        """
+        Shut down the worker process pool cleanly.
+
+        Call this when you are done with a ValidationService instance to release
+        worker processes immediately rather than waiting for garbage collection.
+        Safe to call multiple times or when batch_parallelism is disabled.
+
+        Example:
+            service = ValidationService()
+            try:
+                results = service.batch_validate(entities, ["id"], "quick")
+            finally:
+                service.close()
+        """
+        if self._pool is not None:
+            self._pool.shutdown(wait=True)
+            self._pool = None
 
     def _load_entities_from_file(self, file_uri):
         """

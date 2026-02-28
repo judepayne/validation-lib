@@ -182,7 +182,16 @@ class LogicPackageFetcher:
                 for rule_id in rule_ids:
                     files.add(f"rules/{entity_type}/{rule_id}.py")
 
-        # 3. Helper files from schema_to_helper_mapping
+        # 3. Schema files from schema_to_helper_mapping keys.
+        # The schema_loader disk-cache looks for these under models/ inside the
+        # logic cache.  Without this, schema_loader falls back to a network fetch
+        # on every single validate() call.
+        for schema_url in business_config.get("schema_to_helper_mapping", {}).keys():
+            if schema_url.startswith("http"):
+                filename = schema_url.rstrip("/").split("/")[-1]
+                files.add(f"models/{filename}")
+
+        # 4. Helper class/json files from schema_to_helper_mapping
         for _schema_url, helper_ref in business_config.get(
             "schema_to_helper_mapping", {}
         ).items():
@@ -194,7 +203,7 @@ class LogicPackageFetcher:
                 # New format: "loan_v1" → entity_helpers/loan_v1.json
                 files.add(f"entity_helpers/{helper_ref}.json")
 
-        # 4. Helper files from default_helpers
+        # 5. Helper files from default_helpers
         for _entity_type, helper_ref in business_config.get(
             "default_helpers", {}
         ).items():

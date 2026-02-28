@@ -1,0 +1,3402 @@
+[
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00001",
+    "loan_number": "LN-00001",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00002",
+    "loan_number": "LN-00002",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00003",
+    "loan_number": "LN-00003",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00004",
+    "loan_number": "LN-00004",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00005",
+    "loan_number": "LN-00005",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00006",
+    "loan_number": "LN-00006",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00007",
+    "loan_number": "LN-00007",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00008",
+    "loan_number": "LN-00008",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00009",
+    "loan_number": "LN-00009",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00010",
+    "loan_number": "LN-00010",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00011",
+    "loan_number": "LN-00011",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00012",
+    "loan_number": "LN-00012",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00013",
+    "loan_number": "LN-00013",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00014",
+    "loan_number": "LN-00014",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00015",
+    "loan_number": "LN-00015",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00016",
+    "loan_number": "LN-00016",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00017",
+    "loan_number": "LN-00017",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00018",
+    "loan_number": "LN-00018",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00019",
+    "loan_number": "LN-00019",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00020",
+    "loan_number": "LN-00020",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00021",
+    "loan_number": "LN-00021",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00022",
+    "loan_number": "LN-00022",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00023",
+    "loan_number": "LN-00023",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00024",
+    "loan_number": "LN-00024",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00025",
+    "loan_number": "LN-00025",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00026",
+    "loan_number": "LN-00026",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00027",
+    "loan_number": "LN-00027",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00028",
+    "loan_number": "LN-00028",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00029",
+    "loan_number": "LN-00029",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00030",
+    "loan_number": "LN-00030",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00031",
+    "loan_number": "LN-00031",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00032",
+    "loan_number": "LN-00032",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00033",
+    "loan_number": "LN-00033",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00034",
+    "loan_number": "LN-00034",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00035",
+    "loan_number": "LN-00035",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00036",
+    "loan_number": "LN-00036",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00037",
+    "loan_number": "LN-00037",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00038",
+    "loan_number": "LN-00038",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00039",
+    "loan_number": "LN-00039",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00040",
+    "loan_number": "LN-00040",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00041",
+    "loan_number": "LN-00041",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00042",
+    "loan_number": "LN-00042",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00043",
+    "loan_number": "LN-00043",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00044",
+    "loan_number": "LN-00044",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00045",
+    "loan_number": "LN-00045",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00046",
+    "loan_number": "LN-00046",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00047",
+    "loan_number": "LN-00047",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00048",
+    "loan_number": "LN-00048",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00049",
+    "loan_number": "LN-00049",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00050",
+    "loan_number": "LN-00050",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00051",
+    "loan_number": "LN-00051",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00052",
+    "loan_number": "LN-00052",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00053",
+    "loan_number": "LN-00053",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00054",
+    "loan_number": "LN-00054",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00055",
+    "loan_number": "LN-00055",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00056",
+    "loan_number": "LN-00056",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00057",
+    "loan_number": "LN-00057",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00058",
+    "loan_number": "LN-00058",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00059",
+    "loan_number": "LN-00059",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00060",
+    "loan_number": "LN-00060",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00061",
+    "loan_number": "LN-00061",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00062",
+    "loan_number": "LN-00062",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00063",
+    "loan_number": "LN-00063",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00064",
+    "loan_number": "LN-00064",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00065",
+    "loan_number": "LN-00065",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00066",
+    "loan_number": "LN-00066",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00067",
+    "loan_number": "LN-00067",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00068",
+    "loan_number": "LN-00068",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00069",
+    "loan_number": "LN-00069",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00070",
+    "loan_number": "LN-00070",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00071",
+    "loan_number": "LN-00071",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00072",
+    "loan_number": "LN-00072",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00073",
+    "loan_number": "LN-00073",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00074",
+    "loan_number": "LN-00074",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00075",
+    "loan_number": "LN-00075",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00076",
+    "loan_number": "LN-00076",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00077",
+    "loan_number": "LN-00077",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00078",
+    "loan_number": "LN-00078",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00079",
+    "loan_number": "LN-00079",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00080",
+    "loan_number": "LN-00080",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00081",
+    "loan_number": "LN-00081",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00082",
+    "loan_number": "LN-00082",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00083",
+    "loan_number": "LN-00083",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00084",
+    "loan_number": "LN-00084",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00085",
+    "loan_number": "LN-00085",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00086",
+    "loan_number": "LN-00086",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00087",
+    "loan_number": "LN-00087",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00088",
+    "loan_number": "LN-00088",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00089",
+    "loan_number": "LN-00089",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00090",
+    "loan_number": "LN-00090",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00091",
+    "loan_number": "LN-00091",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00092",
+    "loan_number": "LN-00092",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00093",
+    "loan_number": "LN-00093",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00094",
+    "loan_number": "LN-00094",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00095",
+    "loan_number": "LN-00095",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00096",
+    "loan_number": "LN-00096",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00097",
+    "loan_number": "LN-00097",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00098",
+    "loan_number": "LN-00098",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00099",
+    "loan_number": "LN-00099",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00100",
+    "loan_number": "LN-00100",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00101",
+    "loan_number": "LN-00101",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00102",
+    "loan_number": "LN-00102",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00103",
+    "loan_number": "LN-00103",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00104",
+    "loan_number": "LN-00104",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00105",
+    "loan_number": "LN-00105",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00106",
+    "loan_number": "LN-00106",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00107",
+    "loan_number": "LN-00107",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00108",
+    "loan_number": "LN-00108",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00109",
+    "loan_number": "LN-00109",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00110",
+    "loan_number": "LN-00110",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00111",
+    "loan_number": "LN-00111",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00112",
+    "loan_number": "LN-00112",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00113",
+    "loan_number": "LN-00113",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00114",
+    "loan_number": "LN-00114",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00115",
+    "loan_number": "LN-00115",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00116",
+    "loan_number": "LN-00116",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00117",
+    "loan_number": "LN-00117",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00118",
+    "loan_number": "LN-00118",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00119",
+    "loan_number": "LN-00119",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00120",
+    "loan_number": "LN-00120",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00121",
+    "loan_number": "LN-00121",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00122",
+    "loan_number": "LN-00122",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00123",
+    "loan_number": "LN-00123",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00124",
+    "loan_number": "LN-00124",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00125",
+    "loan_number": "LN-00125",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00126",
+    "loan_number": "LN-00126",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00127",
+    "loan_number": "LN-00127",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00128",
+    "loan_number": "LN-00128",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00129",
+    "loan_number": "LN-00129",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00130",
+    "loan_number": "LN-00130",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00131",
+    "loan_number": "LN-00131",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00132",
+    "loan_number": "LN-00132",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00133",
+    "loan_number": "LN-00133",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00134",
+    "loan_number": "LN-00134",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00135",
+    "loan_number": "LN-00135",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00136",
+    "loan_number": "LN-00136",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00137",
+    "loan_number": "LN-00137",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00138",
+    "loan_number": "LN-00138",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00139",
+    "loan_number": "LN-00139",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00140",
+    "loan_number": "LN-00140",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00141",
+    "loan_number": "LN-00141",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00142",
+    "loan_number": "LN-00142",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00143",
+    "loan_number": "LN-00143",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00144",
+    "loan_number": "LN-00144",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00145",
+    "loan_number": "LN-00145",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00146",
+    "loan_number": "LN-00146",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00147",
+    "loan_number": "LN-00147",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00148",
+    "loan_number": "LN-00148",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00149",
+    "loan_number": "LN-00149",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00150",
+    "loan_number": "LN-00150",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00151",
+    "loan_number": "LN-00151",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00152",
+    "loan_number": "LN-00152",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00153",
+    "loan_number": "LN-00153",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00154",
+    "loan_number": "LN-00154",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00155",
+    "loan_number": "LN-00155",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00156",
+    "loan_number": "LN-00156",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00157",
+    "loan_number": "LN-00157",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00158",
+    "loan_number": "LN-00158",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00159",
+    "loan_number": "LN-00159",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00160",
+    "loan_number": "LN-00160",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00161",
+    "loan_number": "LN-00161",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00162",
+    "loan_number": "LN-00162",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00163",
+    "loan_number": "LN-00163",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00164",
+    "loan_number": "LN-00164",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00165",
+    "loan_number": "LN-00165",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00166",
+    "loan_number": "LN-00166",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00167",
+    "loan_number": "LN-00167",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00168",
+    "loan_number": "LN-00168",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00169",
+    "loan_number": "LN-00169",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00170",
+    "loan_number": "LN-00170",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00171",
+    "loan_number": "LN-00171",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00172",
+    "loan_number": "LN-00172",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00173",
+    "loan_number": "LN-00173",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00174",
+    "loan_number": "LN-00174",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00175",
+    "loan_number": "LN-00175",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00176",
+    "loan_number": "LN-00176",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00177",
+    "loan_number": "LN-00177",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00178",
+    "loan_number": "LN-00178",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00179",
+    "loan_number": "LN-00179",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00180",
+    "loan_number": "LN-00180",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00181",
+    "loan_number": "LN-00181",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00182",
+    "loan_number": "LN-00182",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00183",
+    "loan_number": "LN-00183",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00184",
+    "loan_number": "LN-00184",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00185",
+    "loan_number": "LN-00185",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00186",
+    "loan_number": "LN-00186",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00187",
+    "loan_number": "LN-00187",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00188",
+    "loan_number": "LN-00188",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00189",
+    "loan_number": "LN-00189",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00190",
+    "loan_number": "LN-00190",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00191",
+    "loan_number": "LN-00191",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00192",
+    "loan_number": "LN-00192",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00193",
+    "loan_number": "LN-00193",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00194",
+    "loan_number": "LN-00194",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00195",
+    "loan_number": "LN-00195",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00196",
+    "loan_number": "LN-00196",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00197",
+    "loan_number": "LN-00197",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00198",
+    "loan_number": "LN-00198",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00199",
+    "loan_number": "LN-00199",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  },
+  {
+    "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+    "id": "LOAN-00200",
+    "loan_number": "LN-00200",
+    "facility_id": "FAC-100",
+    "financial": {
+      "principal_amount": 100000,
+      "outstanding_balance": 60000,
+      "interest_rate": 0.045,
+      "currency": "USD"
+    },
+    "dates": {
+      "origination_date": "2024-01-01",
+      "maturity_date": "2029-01-01"
+    },
+    "status": "active"
+  }
+]

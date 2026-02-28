@@ -61,6 +61,8 @@ failures = [r for r in results if r["status"] == "FAIL"]
 
 Validate multiple entities in a single call.
 
+When `batch_parallelism: true` in `local-config.yaml`, entities are distributed across a pool of worker processes and validated in parallel. Results are always returned in the same order as the input list regardless of which worker finishes first.
+
 **Parameters**
 
 | Name | Type | Description |
@@ -210,6 +212,26 @@ service.reload_logic()
 ```
 
 After `reload_logic()` returns, all subsequent validation calls use the freshly downloaded logic.
+
+When `batch_parallelism` is enabled, `reload_logic()` shuts down the worker pool (waiting for any in-flight batch to complete), clears the cache, re-fetches logic, and then recreates the pool so workers initialise from the fresh logic.
+
+---
+
+### `close() → None`
+
+Shut down the worker process pool and release worker processes immediately.
+
+Call this when you are done with a `ValidationService` instance. Safe to call multiple times and safe to call when `batch_parallelism` is disabled (no-op in that case).
+
+```python
+service = ValidationService()
+try:
+    results = service.batch_validate(entities, ["id"], "quick")
+finally:
+    service.close()
+```
+
+If you do not call `close()`, worker processes will be cleaned up when the `ValidationService` instance is garbage collected or when the host process exits.
 
 ---
 

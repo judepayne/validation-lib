@@ -218,6 +218,30 @@ class ConfigLoader:
         """
         return int(self.local_config.get("logic_cache_max_age_seconds", 1800))
 
+    def get_batch_parallelism(self) -> bool:
+        """Get whether batch validation parallelism is enabled.
+
+        Reads batch_parallelism from local-config.yaml.
+        Defaults to False (opt-in) if not set.
+
+        Returns:
+            True if parallel batch processing is enabled, False otherwise.
+        """
+        return bool(self.local_config.get("batch_parallelism", False))
+
+    def get_batch_max_workers(self) -> Optional[int]:
+        """Get number of worker processes for parallel batch validation.
+
+        Reads batch_max_workers from local-config.yaml.
+        Returns None if not set, which causes ProcessPoolExecutor to use
+        os.cpu_count(). Only meaningful when get_batch_parallelism() is True.
+
+        Returns:
+            int: explicit worker count, or None meaning os.cpu_count().
+        """
+        value = self.local_config.get("batch_max_workers")
+        return None if value is None else int(value)
+
     def get_rules_base_uri(self) -> Optional[str]:
         """Get rules base URI from business config."""
         return self.business_config.get("rules_base_uri")

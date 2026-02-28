@@ -3,6 +3,7 @@ Tests for ValidationService API
 
 Tests all 7 public API methods with various scenarios.
 """
+
 import os
 import pytest
 from validation_lib import ValidationService
@@ -11,7 +12,9 @@ from validation_lib import ValidationService
 @pytest.fixture
 def service():
     """Create a ValidationService instance for testing."""
-    return ValidationService()
+    svc = ValidationService()
+    yield svc
+    svc.close()
 
 
 @pytest.fixture
@@ -25,13 +28,10 @@ def sample_loan():
         "financial": {
             "principal_amount": 100000,
             "interest_rate": 0.045,
-            "currency": "USD"
+            "currency": "USD",
         },
-        "dates": {
-            "origination_date": "2024-01-01",
-            "maturity_date": "2025-01-01"
-        },
-        "status": "active"
+        "dates": {"origination_date": "2024-01-01", "maturity_date": "2025-01-01"},
+        "status": "active",
     }
 
 
@@ -47,13 +47,10 @@ def bad_loan():
             "principal_amount": 100000,
             "outstanding_balance": 150000,  # Exceeds principal - violates rule 2
             "interest_rate": 0.045,
-            "currency": "USD"
+            "currency": "USD",
         },
-        "dates": {
-            "origination_date": "2024-01-01",
-            "maturity_date": "2025-01-01"
-        },
-        "status": "active"
+        "dates": {"origination_date": "2024-01-01", "maturity_date": "2025-01-01"},
+        "status": "active",
     }
 
 
@@ -67,12 +64,12 @@ class TestInitialization:
 
     def test_service_has_engine(self, service):
         """Test that service has validation engine."""
-        assert hasattr(service, 'engine')
+        assert hasattr(service, "engine")
         assert service.engine is not None
 
     def test_service_has_config_loader(self, service):
         """Test that service has config loader."""
-        assert hasattr(service, 'config_loader')
+        assert hasattr(service, "config_loader")
         assert service.config_loader is not None
 
 
@@ -87,22 +84,22 @@ class TestDiscoverRulesets:
     def test_discover_rulesets_has_expected_rulesets(self, service):
         """Test that expected rulesets are present."""
         rulesets = service.discover_rulesets()
-        assert 'quick' in rulesets
-        assert 'thorough' in rulesets
+        assert "quick" in rulesets
+        assert "thorough" in rulesets
 
     def test_ruleset_has_metadata(self, service):
         """Test that rulesets have metadata."""
         rulesets = service.discover_rulesets()
-        quick = rulesets['quick']
-        assert 'metadata' in quick
-        assert 'description' in quick['metadata']
+        quick = rulesets["quick"]
+        assert "metadata" in quick
+        assert "description" in quick["metadata"]
 
     def test_ruleset_has_stats(self, service):
         """Test that rulesets have statistics."""
         rulesets = service.discover_rulesets()
-        quick = rulesets['quick']
-        assert 'stats' in quick
-        assert 'total_rules' in quick['stats']
+        quick = rulesets["quick"]
+        assert "stats" in quick
+        assert "total_rules" in quick["stats"]
 
 
 class TestDiscoverRules:
@@ -123,9 +120,9 @@ class TestDiscoverRules:
         rules = service.discover_rules("loan", sample_loan, "quick")
         first_rule = next(iter(rules.values()))
 
-        assert 'rule_id' in first_rule
-        assert 'description' in first_rule
-        assert 'required_data' in first_rule
+        assert "rule_id" in first_rule
+        assert "description" in first_rule
+        assert "required_data" in first_rule
 
 
 class TestValidate:
@@ -146,17 +143,17 @@ class TestValidate:
         results = service.validate("loan", sample_loan, "quick")
         first_result = results[0]
 
-        assert 'rule_id' in first_result
-        assert 'status' in first_result
-        assert 'description' in first_result
+        assert "rule_id" in first_result
+        assert "status" in first_result
+        assert "description" in first_result
 
     def test_status_values(self, service, sample_loan):
         """Test that status values are valid."""
         results = service.validate("loan", sample_loan, "quick")
-        valid_statuses = {'PASS', 'FAIL', 'NORUN', 'ERROR', 'WARN'}
+        valid_statuses = {"PASS", "FAIL", "NORUN", "ERROR", "WARN"}
 
         for result in results:
-            assert result['status'] in valid_statuses
+            assert result["status"] in valid_statuses
 
     def test_validate_thorough_ruleset(self, service, sample_loan):
         """Test validation with thorough ruleset."""
@@ -177,14 +174,17 @@ class TestValidate:
         # Find rule_002_v1 result
         rule_002_result = None
         for result in results:
-            if result['rule_id'] == 'rule_002_v1':
+            if result["rule_id"] == "rule_002_v1":
                 rule_002_result = result
                 break
 
         assert rule_002_result is not None, "rule_002_v1 should be in results"
-        assert rule_002_result['status'] == 'FAIL', "rule_002_v1 should fail for bad loan"
-        assert 'balance' in rule_002_result['message'].lower(), \
+        assert rule_002_result["status"] == "FAIL", (
+            "rule_002_v1 should fail for bad loan"
+        )
+        assert "balance" in rule_002_result["message"].lower(), (
             "Failure message should mention balance issue"
+        )
 
     def test_validate_good_vs_bad_loan(self, service, sample_loan, bad_loan):
         """Test that good loan passes rule_002_v1 but bad loan fails it."""
@@ -192,14 +192,18 @@ class TestValidate:
         bad_results = service.validate("loan", bad_loan, "quick")
 
         # Find rule_002_v1 in both results
-        good_rule_002 = next((r for r in good_results if r['rule_id'] == 'rule_002_v1'), None)
-        bad_rule_002 = next((r for r in bad_results if r['rule_id'] == 'rule_002_v1'), None)
+        good_rule_002 = next(
+            (r for r in good_results if r["rule_id"] == "rule_002_v1"), None
+        )
+        bad_rule_002 = next(
+            (r for r in bad_results if r["rule_id"] == "rule_002_v1"), None
+        )
 
         assert good_rule_002 is not None, "Good loan should have rule_002_v1 result"
         assert bad_rule_002 is not None, "Bad loan should have rule_002_v1 result"
 
-        assert good_rule_002['status'] == 'PASS', "Good loan should pass rule_002_v1"
-        assert bad_rule_002['status'] == 'FAIL', "Bad loan should fail rule_002_v1"
+        assert good_rule_002["status"] == "PASS", "Good loan should pass rule_002_v1"
+        assert bad_rule_002["status"] == "FAIL", "Bad loan should fail rule_002_v1"
 
 
 class TestBatchValidate:
@@ -224,10 +228,10 @@ class TestBatchValidate:
         results = service.batch_validate([sample_loan], ["id"], "quick")
         first_result = results[0]
 
-        assert 'entity_id' in first_result
-        assert 'entity_type' in first_result
-        assert 'results' in first_result
-        assert isinstance(first_result['results'], list)
+        assert "entity_id" in first_result
+        assert "entity_type" in first_result
+        assert "results" in first_result
+        assert isinstance(first_result["results"], list)
 
     def test_batch_validates_each_entity(self, service, sample_loan):
         """Test that each entity in batch is validated."""
@@ -236,8 +240,16 @@ class TestBatchValidate:
 
         results = service.batch_validate([sample_loan, loan2], ["id"], "quick")
 
-        assert results[0]['entity_id'] == 'LOAN-00001'
-        assert results[1]['entity_id'] == 'LOAN-00002'
+        assert results[0]["entity_id"] == "LOAN-00001"
+        assert results[1]["entity_id"] == "LOAN-00002"
+
+    def test_batch_preserves_order(self, service, sample_loan):
+        """Results must be returned in input order regardless of parallel execution."""
+        loans = [dict(sample_loan, id=f"LOAN-{i:05d}") for i in range(1, 9)]
+        results = service.batch_validate(loans, ["id"], "quick")
+        assert len(results) == 8
+        for i, result in enumerate(results, 1):
+            assert result["entity_id"] == f"LOAN-{i:05d}"
 
 
 class TestBatchFileValidate:
@@ -268,10 +280,10 @@ class TestBatchFileValidate:
 
         # Each result should have expected structure
         for result in results:
-            assert 'entity_id' in result
-            assert 'entity_type' in result
-            assert 'results' in result
-            assert isinstance(result['results'], list)
+            assert "entity_id" in result
+            assert "entity_type" in result
+            assert "results" in result
+            assert isinstance(result["results"], list)
 
     def test_batch_file_validate_identifies_bad_loan(self, service):
         """Test that batch file validation identifies the bad loan."""
@@ -282,25 +294,25 @@ class TestBatchFileValidate:
         results = service.batch_file_validate(file_uri, ["loan"], ["id"], "quick")
 
         # Find results for each loan
-        good_loan_result = next(r for r in results if r['entity_id'] == 'LOAN-00001')
-        bad_loan_result = next(r for r in results if r['entity_id'] == 'LOAN-99999')
+        good_loan_result = next(r for r in results if r["entity_id"] == "LOAN-00001")
+        bad_loan_result = next(r for r in results if r["entity_id"] == "LOAN-99999")
 
         # Check that rule_002_v1 passes for good loan
         good_rule_002 = next(
-            (r for r in good_loan_result['results'] if r['rule_id'] == 'rule_002_v1'),
-            None
+            (r for r in good_loan_result["results"] if r["rule_id"] == "rule_002_v1"),
+            None,
         )
         assert good_rule_002 is not None
-        assert good_rule_002['status'] == 'PASS'
+        assert good_rule_002["status"] == "PASS"
 
         # Check that rule_002_v1 fails for bad loan
         bad_rule_002 = next(
-            (r for r in bad_loan_result['results'] if r['rule_id'] == 'rule_002_v1'),
-            None
+            (r for r in bad_loan_result["results"] if r["rule_id"] == "rule_002_v1"),
+            None,
         )
         assert bad_rule_002 is not None
-        assert bad_rule_002['status'] == 'FAIL'
-        assert 'balance' in bad_rule_002['message'].lower()
+        assert bad_rule_002["status"] == "FAIL"
+        assert "balance" in bad_rule_002["message"].lower()
 
 
 class TestReloadLogic:
@@ -367,10 +379,7 @@ class TestErrorHandling:
 
     def test_validate_without_schema(self, service):
         """Test validation with entity missing $schema."""
-        loan_no_schema = {
-            "id": "TEST-001",
-            "loan_number": "LN-001"
-        }
+        loan_no_schema = {"id": "TEST-001", "loan_number": "LN-001"}
 
         # Should still work with fallback to default helper
         results = service.validate("loan", loan_no_schema, "quick")
@@ -384,19 +393,20 @@ class TestNotesField:
     def loan_with_notes(self, sample_loan):
         """Loan carrying two notes entries: one plain note and one operation-typed entry."""
         import copy
+
         loan = copy.deepcopy(sample_loan)
         loan["id"] = "LOAN-00001"  # must match ^LOAN-[0-9]+$
         loan["notes"] = [
             {
                 "datetime": "2024-03-01T09:00:00Z",
                 "operation_type": "note",
-                "text": "Initial review completed. All documentation received."
+                "text": "Initial review completed. All documentation received.",
             },
             {
                 "datetime": "2024-03-15T14:30:00Z",
                 "operation_type": "edited",
-                "text": "Interest rate updated following rate reset clause."
-            }
+                "text": "Interest rate updated following rate reset clause.",
+            },
         ]
         return loan
 
@@ -404,12 +414,13 @@ class TestNotesField:
     def loan_with_notes_no_op_type(self, sample_loan):
         """Loan with a notes entry that omits the optional operation_type."""
         import copy
+
         loan = copy.deepcopy(sample_loan)
         loan["id"] = "LOAN-00002"  # must match ^LOAN-[0-9]+$
         loan["notes"] = [
             {
                 "datetime": "2024-06-01T10:00:00Z",
-                "text": "Borrower requested repayment schedule review."
+                "text": "Borrower requested repayment schedule review.",
             }
         ]
         return loan
@@ -418,6 +429,7 @@ class TestNotesField:
     def loan_with_string_notes(self, sample_loan):
         """Loan using the old freeform string notes field — should fail schema validation."""
         import copy
+
         loan = copy.deepcopy(sample_loan)
         loan["id"] = "LOAN-00003"  # must match ^LOAN-[0-9]+$
         loan["notes"] = "Some old-style freeform note"
@@ -426,24 +438,26 @@ class TestNotesField:
     def test_loan_with_notes_passes_schema(self, service, loan_with_notes):
         """Loan with a valid notes array must pass rule_001 (schema validation)."""
         results = service.validate("loan", loan_with_notes, "quick")
-        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
         assert rule_001 is not None, "rule_001_v1 should be present"
-        assert rule_001['status'] == 'PASS', (
+        assert rule_001["status"] == "PASS", (
             f"Schema validation should pass for a valid notes array; got: {rule_001.get('message')}"
         )
 
     def test_loan_with_notes_passes_all_rules(self, service, loan_with_notes):
         """Loan with a valid notes array should pass the full thorough ruleset."""
         results = service.validate("loan", loan_with_notes, "thorough")
-        failures = [r for r in results if r['status'] == 'FAIL']
+        failures = [r for r in results if r["status"] == "FAIL"]
         assert failures == [], f"Expected no failures, got: {failures}"
 
-    def test_loan_with_notes_no_op_type_passes_schema(self, service, loan_with_notes_no_op_type):
+    def test_loan_with_notes_no_op_type_passes_schema(
+        self, service, loan_with_notes_no_op_type
+    ):
         """Notes entry without operation_type (optional field) must still pass schema."""
         results = service.validate("loan", loan_with_notes_no_op_type, "quick")
-        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
         assert rule_001 is not None
-        assert rule_001['status'] == 'PASS', (
+        assert rule_001["status"] == "PASS", (
             f"Notes entry missing optional operation_type should still pass schema; "
             f"got: {rule_001.get('message')}"
         )
@@ -451,9 +465,9 @@ class TestNotesField:
     def test_loan_with_string_notes_fails_schema(self, service, loan_with_string_notes):
         """Old freeform string notes must fail rule_001 schema validation."""
         results = service.validate("loan", loan_with_string_notes, "quick")
-        rule_001 = next((r for r in results if r['rule_id'] == 'rule_001_v1'), None)
+        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
         assert rule_001 is not None, "rule_001_v1 should be present"
-        assert rule_001['status'] == 'FAIL', (
+        assert rule_001["status"] == "FAIL", (
             "String notes field should fail schema validation under the new array definition"
         )
 
@@ -476,7 +490,7 @@ class TestEndToEnd:
         assert len(results) > 0
 
         # 4. Check validation passed
-        passed = any(r['status'] == 'PASS' for r in results)
+        passed = any(r["status"] == "PASS" for r in results)
         assert passed
 
     def test_batch_workflow(self, service, sample_loan):
@@ -496,4 +510,4 @@ class TestEndToEnd:
 
         # Each should have validation results
         for result in results:
-            assert len(result['results']) > 0
+            assert len(result["results"]) > 0

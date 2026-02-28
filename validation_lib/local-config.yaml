@@ -15,3 +15,13 @@ coordination_service_config_uri: "coordination-service-config.yaml"
 # Applies both at startup (constructor checks disk cache age) and during a session
 # (checked every 5 minutes against in-memory config age).
 logic_cache_max_age_seconds: 1800
+
+# Batch validation parallelism.
+# When true, batch_validate() distributes entities across a ProcessPoolExecutor worker
+# pool, giving near-linear throughput scaling with CPU count.
+# Defaults to false (opt-in). Set to true to enable.
+batch_parallelism: false
+
+# Number of worker processes when batch_parallelism is true.
+# Omit or set to null to use os.cpu_count(). Ignored when batch_parallelism is false.
+batch_max_workers: 4

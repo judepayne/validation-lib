@@ -123,25 +123,35 @@ For single-threaded use — one request at a time, or sequential batch processin
 
 ### Batch validation
 
-`batch_validate()` and `batch_file_validate()` currently iterate entities sequentially. For large batches this is the bottleneck: a 10,000-loan batch runs all loans one after another in the same thread.
+`batch_validate()` and `batch_file_validate()` support parallel execution via a `ProcessPoolExecutor` worker pool. Enable it in `local-config.yaml`:
 
-**This is an open design question.** There are several candidate approaches, each with trade-offs:
+```yaml
+batch_parallelism: true
+batch_max_workers: 4   # omit for os.cpu_count()
+```
 
-**Option A — Thread-per-entity with a shared service instance**
-Simple to implement with `concurrent.futures.ThreadPoolExecutor`, but thread-safety of `ValidationService` (specifically `sys.path` mutation and the module-level `VersionRegistry` singleton) has not been analysed. Requires audit before use.
+**Design:** A persistent pool is created when `ValidationService` is initialised and kept alive across calls. Each worker process holds its own `ValidationService` instance (loaded once from the `/tmp` cache) — there is no shared state between workers. Entities are distributed across workers and results collected in input order.
 
-**Option B — Process pool with one service per worker**
-`concurrent.futures.ProcessPoolExecutor` gives true parallelism and sidesteps thread-safety concerns (each worker has its own process and memory). Cost: each worker pays the startup cost (logic cache load, `sys.path` setup). For batches large enough, this amortises. Requires logic cache to be pre-populated before spawning workers, or each worker will fetch independently.
+**Measured performance — 200 loans, thorough ruleset, 8-core macOS (Python 3.13):**
 
-**Option C — Async batching with a single thread**
-If the bottleneck is I/O (network fetches for coordination service, remote rule loading) rather than CPU, `asyncio` could help. Pure rule execution is CPU-bound Python and would not benefit from `asyncio` without running rules in a thread executor.
+| Config | Mean | Min | Max | Ent/sec | Speedup |
+|---|---|---|---|---|---|
+| Sequential (no pool) | 8,343 ms | 8,239 ms | 8,459 ms | 24 | 1.00× |
+| Parallel — 2 workers | 4,204 ms | 4,124 ms | 4,259 ms | 48 | 1.98× |
+| **Parallel — 4 workers** | **2,978 ms** | **2,636 ms** | **3,289 ms** | **67** | **2.80×** |
+| Parallel — 8 workers | 3,450 ms | 3,358 ms | 3,621 ms | 58 | 2.42× |
 
-**Option D — Pre-fork the service, share nothing**
-Start N worker processes each with a `ValidationService` instance, distribute batch items across them via a queue (e.g. multiprocessing.Queue or Redis). Cleanest concurrency model, highest operational complexity.
+4 workers is optimal on this machine. 8 workers underperforms 4 due to macOS performance/efficiency core topology and the IPC overhead of pickling results across more processes. Start at `os.cpu_count() / 2` and tune from there using `tests/bench_batch.py`.
 
-**Recommendation**: If batch throughput is a concern, Option B (process pool) is the most straightforward path that avoids thread-safety unknowns. However, this has not been implemented or benchmarked. The design should be validated with profiling before committing to an approach.
+The worker pool uses a `spawn` start method explicitly to avoid `fork`-related deadlocks in threaded host processes (e.g. the MCP server).
 
-The single-threaded JSON-RPC server has the same limitation: it handles one request at a time. Horizontal scaling requires either multiple server processes behind a load balancer, or moving to an HTTP or gRPC transport (see [JSON-RPC Server — Trade-offs](JSONRPC-SERVER.md#trade-offs)).
+**Worker mode:** Workers run with `_worker_mode=True`, which disables auto-refresh. Only the main process manages cache freshness. This prevents multiple workers from simultaneously clearing and re-fetching the shared `/tmp/validation-lib/logic/` cache.
+
+**`reload_logic()` interaction:** Calling `reload_logic()` shuts down the pool (`shutdown(wait=True)`), clears the cache, re-fetches logic, then recreates the pool with fresh workers. Because `ValidationService` is used one call at a time, the pool is always idle when `reload_logic()` is triggered, so no in-flight work is interrupted.
+
+**Cleanup:** Call `service.close()` when done to release worker processes immediately. Without it, workers are cleaned up on garbage collection or process exit.
+
+The JSON-RPC server inherits parallel batch performance automatically — a `batch_validate` JSON-RPC call with `batch_parallelism: true` fans out internally across workers with no changes needed on the client side.
 
 ---
 
@@ -165,7 +175,7 @@ The single-threaded JSON-RPC server has the same limitation: it handles one requ
 - [x] Remote URI support for logic and configs
 - [x] Exception chaining and descriptive error messages
 - [ ] Coordination service HTTP implementation
-- [ ] Thread-safety audit and concurrency design for batch operations
+- [x] Parallel batch validation via ProcessPoolExecutor (opt-in via `batch_parallelism` in local-config.yaml)
 - [ ] Structured logging (JSON format, correlation IDs)
 - [ ] Input validation and size limits beyond the current 50 MB file cap
 - [ ] Authentication for JSON-RPC server if network-exposed

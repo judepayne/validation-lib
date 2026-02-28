@@ -15,6 +15,7 @@ validation-lib provides a flexible, config-driven validation framework for busin
 - **Entity helpers** — logical field abstraction; rules are insulated from physical schema changes
 - **Schema versioning** — multiple schema versions coexist; rules route automatically
 - **Hot reload** — update logic without restarting the host application
+- **Parallel batch validation** — `ProcessPoolExecutor` worker pool for `batch_validate()`; opt-in via `local-config.yaml`, near-linear throughput scaling with CPU count
 - **JSON-RPC server** — use from any language over stdin/stdout
 
 ## Installation
