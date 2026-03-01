@@ -15,7 +15,7 @@ The library is production-ready for single-instance, embedded deployments. The f
 | JSON-RPC server | Complete |
 | Two-tier configuration | Complete — supports remote URIs |
 | Coordination service | **Stubbed** — returns empty data |
-| Concurrency / threading | **Open design question** |
+| Concurrency / threading | Complete |
 | Structured logging / metrics | Not implemented |
 | Security (auth, input limits) | Not implemented |
 
@@ -113,6 +113,8 @@ Pin to a specific commit SHA for reproducible builds. The `validation-service` p
 
 ## Performance and concurrency
 
+After consideration, it was decided to limit concurrent operations to batch_validate on a pool of process workers, which is described below, principally because there was a potential race condition when multiple workers starting up with an empty cache, could all attempt to refresh it at the same time. It is easier to just spin up multiple instances of the library, each one owning it's own cache.
+
 ### Current design
 
 `ValidationService` and `ValidationEngine` are **not thread-safe**. The engine modifies `sys.path` and `sys.modules` at initialisation and on `reload_logic()`, and the entity helper registry is a module-level singleton. Running concurrent `validate()` calls from multiple threads against a shared `ValidationService` instance is untested and likely unsafe.
@@ -155,6 +157,54 @@ The JSON-RPC server inherits parallel batch performance automatically — a `bat
 
 ---
 
+## Multiple instances
+
+### The stdio constraint
+
+The JSON-RPC server communicates over stdin/stdout. A single server process owns one pair of streams, which means **one client per server process** — there is no mechanism for a second client to attach to an already-running server. This is a fundamental property of the stdio transport, not a bug.
+
+For most embedded use cases this is fine: the host application spawns one server process, keeps it alive, and sends all requests through it. The long-lived process pays the startup cost (logic fetch, `sys.path` setup, cache warm) once and amortises it across all requests.
+
+The constraint becomes significant when a host application wants to:
+
+- **Fan out load** across multiple Python workers to increase request throughput
+- **Run multiple logically independent instances** against different rule sets or logic repos simultaneously (e.g. a staging instance alongside a production instance)
+- **Share a pool of validation servers** across several client processes
+
+None of these are achievable with stdio transport alone.
+
+### Running multiple independent instances
+
+The practical multi-instance pattern today is to spawn N independent server processes, each with its own stdin/stdout pair, and route requests across them in the host. This is straightforward but has an important implication: **each process needs its own logic cache directory**.
+
+The cache root defaults to `/tmp/validation-lib/` but is configurable via `logic_cache_dir` in `local-config.yaml`. If two instances run on the same machine pointing at different logic sources, give each a distinct path:
+
+```yaml
+# Instance A — production rules
+logic_cache_dir: "/tmp/validation-lib-prod"
+business_config_uri: "https://cdn.example.com/prod/business-config.yaml"
+
+# Instance B — staging rules
+logic_cache_dir: "/tmp/validation-lib-staging"
+business_config_uri: "https://cdn.example.com/staging/business-config.yaml"
+```
+
+Instances pointing at the *same* logic source can safely share a cache dir — one fetch serves all, and the auto-refresh debounce prevents stampedes. The problem is only when logic sources differ. Without separate dirs, `reload_logic()` does `shutil.rmtree` on the whole tree — instance A reloading while instance B is mid-validation would corrupt B's imports.
+
+### Path to socket-based transport
+
+For higher-throughput multi-client scenarios, the right move is to replace stdio with a TCP or Unix domain socket transport. This would allow:
+
+- Multiple clients to connect to one server
+- Request multiplexing over a single long-lived connection
+- Load balancing across a named pool of servers
+
+The `ValidationService` API itself needs no changes — only the transport layer in `jsonrpc_server.py` changes. The JSON-RPC protocol is identical; only the stream source differs. This is documented as a future option in [JSON-RPC Server — Future options](JSONRPC-SERVER.md).
+
+The stdio-vs-socket decision can be deferred until throughput requirements are measured. For most deployments, a small fixed pool of stdio-based subprocesses (managed by the host) is simpler to operate and sufficient.
+
+---
+
 ## Security
 
 **HTTPS only for remote URIs** — `local-config.yaml` and `business-config.yaml` should always use `https://` URLs in production. The library fetches and executes remote Python rule files; ensure the source is trusted and served over TLS.
@@ -176,6 +226,7 @@ The JSON-RPC server inherits parallel batch performance automatically — a `bat
 - [x] Exception chaining and descriptive error messages
 - [ ] Coordination service HTTP implementation
 - [x] Parallel batch validation via ProcessPoolExecutor (opt-in via `batch_parallelism` in local-config.yaml)
+- [x] Configurable logic cache directory (`logic_cache_dir` in local-config.yaml) — required for safe multi-instance deployments on the same host
 - [ ] Structured logging (JSON format, correlation IDs)
 - [ ] Input validation and size limits beyond the current 50 MB file cap
 - [ ] Authentication for JSON-RPC server if network-exposed

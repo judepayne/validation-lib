@@ -19,9 +19,6 @@ except ImportError:
 class ConfigLoader:
     """Handles two-tier configuration: local config + business config."""
 
-    # Hardcoded cache directory for validation-lib
-    CACHE_DIR = Path("/tmp/validation-lib")
-
     def __init__(self):
         """
         Initialize config loader with bundled local-config.yaml.
@@ -34,12 +31,16 @@ class ConfigLoader:
         config_file = files("validation_lib").joinpath("local-config.yaml")
         self.local_config_path = str(config_file)
 
-        self.cache_dir = self.CACHE_DIR
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-
-        # Load local config from the bundled file
+        # Load local config first so we can read logic_cache_dir from it
         with config_file.open("r") as f:
             self.local_config = yaml.safe_load(f)
+
+        # Cache root is configurable — allows multiple instances on the same host
+        # to use separate directories and avoid cache collisions.
+        self.cache_dir = Path(
+            self.local_config.get("logic_cache_dir", "/tmp/validation-lib")
+        )
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Get business_config_uri - construct from new structure or use legacy direct value
         logic_dir_location = self.local_config.get("logic_directory_location")

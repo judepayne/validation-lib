@@ -16,6 +16,11 @@ business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-log
 # URI to coordination service config
 coordination_service_config_uri: "coordination-service-config.yaml"
 
+# Root directory for the local logic cache (rules, helpers, schemas, config YAMLs).
+# Override when running multiple independent instances on the same host to prevent
+# cache collisions. Instances pointing at the same logic source can share a dir safely.
+logic_cache_dir: "/tmp/validation-lib"
+
 # Cache TTL: auto-refresh if logic cache is older than this (seconds)
 logic_cache_max_age_seconds: 1800
 ```
@@ -163,8 +168,10 @@ The local cache mirrors the remote `logic/` directory structure exactly, so all 
 
 ### Cache directory
 
+The cache root defaults to `/tmp/validation-lib/` and is configurable via `logic_cache_dir` in `local-config.yaml`. Everything hangs off this single root:
+
 ```
-/tmp/validation-lib/
+<logic_cache_dir>/           ← configurable root (default /tmp/validation-lib)
 ├── logic/                   ← cached logic package (rules, helpers, schemas)
 │   ├── rules/
 │   ├── entity_helpers/
@@ -176,7 +183,7 @@ The local cache mirrors the remote `logic/` directory structure exactly, so all 
 To force a full re-fetch, clear the cache:
 
 ```bash
-rm -rf /tmp/validation-lib/
+rm -rf /tmp/validation-lib/   # adjust path if logic_cache_dir was overridden
 ```
 
 Or call it programmatically:

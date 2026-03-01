@@ -161,7 +161,9 @@ class ValidationService:
         )
 
         # Fetch/cache logic from configured location
-        self.logic_fetcher = LogicPackageFetcher()
+        self.logic_fetcher = LogicPackageFetcher(
+            cache_root=self.config_loader.cache_dir
+        )
         logic_dir = self.logic_fetcher.resolve_logic_dir(
             self.config_loader.local_config_path
         )

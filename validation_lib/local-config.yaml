@@ -11,6 +11,11 @@ business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-log
 # Can point to centrally managed coordination service config
 coordination_service_config_uri: "coordination-service-config.yaml"
 
+# Root directory for the local logic cache (rules, helpers, schemas, config YAMLs).
+# Override when running multiple independent instances on the same host to prevent
+# cache collisions. Instances pointing at the same logic source can safely share a dir.
+logic_cache_dir: "/tmp/validation-lib"
+
 # Maximum age of the logic cache in seconds before it is automatically refreshed.
 # Applies both at startup (constructor checks disk cache age) and during a session
 # (checked every 5 minutes against in-memory config age).

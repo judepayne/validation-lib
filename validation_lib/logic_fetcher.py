@@ -7,7 +7,7 @@ import urllib.request
 import urllib.parse
 import yaml
 from pathlib import Path
-from typing import Set, Optional
+from typing import Optional, Set
 
 
 class LogicPackageFetcher:
@@ -34,12 +34,23 @@ class LogicPackageFetcher:
         "schema_helpers/schema_loader.py",
     ]
 
-    # Hardcoded cache directory for validation-lib
+    # Default cache directory — used when no cache_root is supplied.
     CACHE_DIR = Path("/tmp/validation-lib/logic")
 
-    def __init__(self):
-        """Initialize logic fetcher with fixed cache directory."""
-        self.cache_dir = self.CACHE_DIR
+    def __init__(self, cache_root: Optional[Path] = None):
+        """Initialize logic fetcher with optional configurable cache root.
+
+        Args:
+            cache_root: Root cache directory. Logic files are cached under
+                        cache_root/logic/. When None, defaults to
+                        /tmp/validation-lib/logic (CACHE_DIR class constant).
+                        Override to isolate instances that use different logic
+                        sources on the same host.
+        """
+        if cache_root is not None:
+            self.cache_dir = Path(cache_root) / "logic"
+        else:
+            self.cache_dir = self.CACHE_DIR
 
     def resolve_logic_dir(self, local_config_path: str) -> str:
         """Resolve logic directory from local config.
