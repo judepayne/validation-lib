@@ -18,6 +18,7 @@ Example response (stdout):
     {"jsonrpc":"2.0","id":1,"result":{"quick":{...},"thorough":{...}}}
 """
 
+import socket
 import sys
 import json
 import signal
@@ -66,54 +67,108 @@ class ValidationJsonRpcServer:
             sys.stderr.write(f"[DEBUG] {message}\n")
             sys.stderr.flush()
 
-    def start_server(self):
+    def _serve_stream(self, rfile, wfile) -> None:
         """
-        Start the JSON-RPC server loop.
+        Serve JSON-RPC requests over any pair of file-like objects.
 
-        Reads requests from stdin, processes them, writes responses to stdout.
-        Runs until EOF or stop signal received.
+        Core request loop shared by stdio and TCP transports. Reads
+        newline-delimited JSON requests from rfile and writes responses
+        to wfile until EOF or stop signal.
+
+        Args:
+            rfile: Readable file-like object (supports readline()).
+            wfile: Writable file-like object (supports write() and flush()).
         """
-        self.running = True
-        self._log("ValidationService JSON-RPC server started")
-
         while self.running:
             try:
-                # Read request from stdin
-                line = sys.stdin.readline()
+                line = rfile.readline()
 
                 if not line:
-                    # EOF - clean shutdown
-                    self._log("EOF received, shutting down")
+                    self._log("EOF received, closing connection")
                     break
 
-                self._log(f"Received request")
+                self._log("Received request")
 
-                # Process request
                 response = self.handle_request(line)
 
                 # JSON-RPC 2.0: notifications (no "id") must not receive a response
                 if response is not None:
-                    self._send_response(response)
+                    self._send_response(response, wfile)
 
             except KeyboardInterrupt:
                 self._log("KeyboardInterrupt received, shutting down")
                 break
 
             except Exception as e:
-                # Fatal error in main loop
-                self._log(f"Fatal error in main loop: {e}")
+                self._log(f"Fatal error in serve loop: {e}")
                 import traceback
 
                 traceback.print_exc(file=sys.stderr)
                 break
 
+    def start_stdio_server(self) -> None:
+        """
+        Start the JSON-RPC server reading from stdin and writing to stdout.
+
+        Runs until EOF on stdin or a stop signal is received.
+        """
+        self.running = True
+        self._log("ValidationService JSON-RPC server started (stdio)")
+        self._serve_stream(sys.stdin, sys.stdout)
         self._log("Server stopped")
 
-    def stop_server(self):
+    def start_server(self) -> None:
+        """Backward-compatible alias for start_stdio_server()."""
+        self.start_stdio_server()
+
+    def start_tcp_server(self, host: str, port: int) -> None:
+        """
+        Start the JSON-RPC server listening for TCP connections on host:port.
+
+        Accepts one connection at a time (sequential). The next connection
+        is accepted only after the current client disconnects. This keeps
+        ValidationService access single-threaded and avoids any shared-state
+        hazards from concurrent reload_logic() calls.
+
+        For parallel throughput, run N independent server processes on
+        distinct ports, each with its own logic_cache_dir in local-config.yaml.
+        Do not share a cache directory across processes — a reload_logic()
+        call on one process will corrupt the cache for all others.
+
+        Args:
+            host: Bind address. Defaults to 127.0.0.1 (loopback only).
+                  Pass 0.0.0.0 to accept remote connections (ensure auth
+                  is handled by surrounding infrastructure).
+            port: TCP port to listen on.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as srv:
+            srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            srv.bind((host, port))
+            srv.listen(1)
+            srv.settimeout(1.0)  # allows stop_server() to take effect within 1 s
+            self.running = True
+            self._log(f"Listening on {host}:{port}")
+            while self.running:
+                try:
+                    conn, addr = srv.accept()
+                except socket.timeout:
+                    continue  # re-check self.running
+                except OSError:
+                    break  # socket closed or unrecoverable error
+                with conn:
+                    self._log(f"Connection from {addr}")
+                    rfile = conn.makefile("r", encoding="utf-8")
+                    wfile = conn.makefile("w", encoding="utf-8")
+                    self._serve_stream(rfile, wfile)
+                    self._log(f"Connection closed: {addr}")
+        self._log("TCP server stopped")
+
+    def stop_server(self) -> None:
         """
         Stop the server gracefully.
 
-        Sets running flag to False, causing the main loop to exit.
+        Sets running flag to False, causing the active serve loop to exit
+        after the current request completes.
         """
         self.running = False
         self._log("Stop signal received")
@@ -306,12 +361,21 @@ class ValidationJsonRpcServer:
 
         return {"jsonrpc": "2.0", "id": request_id, "error": error}
 
-    def _send_response(self, response: Dict[str, Any]):
-        """Send JSON-RPC response to stdout."""
+    def _send_response(self, response: Dict[str, Any], wfile=None) -> None:
+        """
+        Send a JSON-RPC response.
+
+        Args:
+            response: JSON-RPC response dict to serialise and send.
+            wfile: Writable file-like object. Defaults to sys.stdout so
+                   existing call sites (e.g. tests) need no changes.
+        """
+        if wfile is None:
+            wfile = sys.stdout
         response_json = json.dumps(response)
         self._log(f"Sending: {response_json}")
-        sys.stdout.write(response_json + "\n")
-        sys.stdout.flush()
+        wfile.write(response_json + "\n")
+        wfile.flush()
 
 
 def main():
@@ -340,10 +404,23 @@ See: https://www.jsonrpc.org/specification
     parser.add_argument(
         "--debug", action="store_true", help="Enable debug logging to stderr"
     )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="TCP port to listen on. If omitted, the server uses stdio (default).",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Bind address for TCP mode (default: 127.0.0.1 — loopback only). "
+        "Ignored when --port is not set.",
+    )
 
     args = parser.parse_args()
 
-    # Create and start server
+    # Create server
     server = ValidationJsonRpcServer(debug=args.debug)
 
     # Handle signals for graceful shutdown
@@ -353,8 +430,11 @@ See: https://www.jsonrpc.org/specification
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Start server (blocks until stopped)
-    server.start_server()
+    # Start server in selected transport mode
+    if args.port is not None:
+        server.start_tcp_server(args.host, args.port)
+    else:
+        server.start_stdio_server()
 
 
 if __name__ == "__main__":

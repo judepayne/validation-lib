@@ -6,12 +6,40 @@ validation-lib includes a JSON-RPC 2.0 server that exposes the full `ValidationS
 
 ## Starting the server
 
+### stdio (default)
+
 ```bash
 python -m validation_lib.jsonrpc_server
 python -m validation_lib.jsonrpc_server --debug    # log to stderr
 ```
 
 The server reads newline-delimited JSON-RPC requests from stdin and writes responses to stdout. It runs until it receives EOF on stdin, SIGTERM, or SIGINT.
+
+### TCP socket
+
+```bash
+python -m validation_lib.jsonrpc_server --port 5000
+python -m validation_lib.jsonrpc_server --port 5000 --host 0.0.0.0   # accept remote connections
+python -m validation_lib.jsonrpc_server --port 5000 --debug
+```
+
+The server binds a TCP socket and accepts one connection at a time. When the current client disconnects, the next connection is accepted. The JSON-RPC protocol is identical to stdio — newline-delimited JSON over the socket stream.
+
+`--host` defaults to `127.0.0.1` (loopback only). Exposing on `0.0.0.0` is an explicit opt-in; ensure authentication is handled by the surrounding infrastructure if doing so (see [Security](PRODUCTION.md)).
+
+#### Running multiple instances
+
+Each server process must be configured with a **distinct `logic_cache_dir`** in `local-config.yaml`. If multiple instances share the same cache directory, a `reload_logic()` call on one process will corrupt the cache for all others. The port number is a convenient differentiator for the path:
+
+```yaml
+# local-config.yaml for the instance on port 5001
+logic_cache_dir: "/tmp/validation-lib-5001"
+
+# local-config.yaml for the instance on port 5002
+logic_cache_dir: "/tmp/validation-lib-5002"
+```
+
+The mapping between port and cache path is entirely the client's choice — the library does not derive it automatically.
 
 ### Stopping the server
 
@@ -152,7 +180,7 @@ Returns `{"cache_age": 1234.5}` (seconds, or `null` if no cache exists).
 
 ## Client examples
 
-### Python
+### Python — stdio
 
 ```python
 import json
@@ -198,7 +226,48 @@ server.stdin.close()
 server.wait()
 ```
 
-### Clojure
+### Python — TCP
+
+```python
+import json
+import socket
+
+# Connect to a running TCP server (started with --port 5000)
+sock = socket.create_connection(("127.0.0.1", 5000))
+rfile = sock.makefile("r", encoding="utf-8")
+wfile = sock.makefile("w", encoding="utf-8")
+
+def call(method, params):
+    request = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
+    wfile.write(json.dumps(request) + "\n")
+    wfile.flush()
+    return json.loads(rfile.readline())
+
+# Discover available rulesets
+print(call("discover_rulesets", {}))
+
+# Validate a loan
+response = call("validate", {
+    "entity_type": "loan",
+    "entity_data": {
+        "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+        "id": "LOAN-001",
+        "loan_number": "LN-2024-001",
+        "financial": {"principal_amount": 500000, "currency": "USD",
+                      "interest_rate": 0.05, "interest_type": "fixed"},
+        "dates": {"origination_date": "2024-01-15", "maturity_date": "2029-01-15"},
+        "status": "active",
+    },
+    "ruleset_name": "quick",
+})
+for result in response["result"]:
+    print(f"{result['rule_id']}: {result['status']}")
+
+# Close the connection
+sock.close()
+```
+
+### Clojure — stdio
 
 ```clojure
 (ns myapp.validation
@@ -229,6 +298,36 @@ server.wait()
   (stop-server server))
 ```
 
+### Clojure — TCP
+
+```clojure
+(ns myapp.validation
+  (:require [cheshire.core :as json])
+  (:import [java.io BufferedReader BufferedWriter InputStreamReader OutputStreamWriter]
+           [java.net Socket]))
+
+(defn connect [host port]
+  (let [socket (Socket. host port)
+        writer (BufferedWriter. (OutputStreamWriter. (.getOutputStream socket) "UTF-8"))
+        reader (BufferedReader. (InputStreamReader. (.getInputStream socket) "UTF-8"))]
+    {:socket socket :writer writer :reader reader}))
+
+(defn call [{:keys [writer reader]} method params]
+  (let [request (json/generate-string {:jsonrpc "2.0" :id 1 :method method :params params})]
+    (.write writer request)
+    (.newLine writer)
+    (.flush writer)
+    (json/parse-string (.readLine reader) true)))
+
+(defn disconnect [{:keys [socket]}]
+  (.close socket))
+
+;; Usage — server must already be running with --port 5000
+(let [conn (connect "127.0.0.1" 5000)]
+  (println (call conn "discover_rulesets" {}))
+  (disconnect conn))
+```
+
 ---
 
 ## Design rationale
@@ -251,8 +350,8 @@ The JSON-RPC 2.0 over stdin/stdout design was chosen over alternatives (HTTP ser
 
 ### Trade-offs
 
-The main limitation is that the current design runs a **single Python worker per host process**. This is sufficient for most embedded use cases but limits horizontal scaling — you cannot spread load across a pool of Python workers without moving to an HTTP or gRPC transport. This is an open design question for high-throughput production deployments (see [Production](PRODUCTION.md)).
+The stdio transport runs a **single Python worker per host process**, which is sufficient for most embedded use cases. For horizontal scaling, use the TCP transport and run a pool of N independent server processes on distinct ports, each with its own `logic_cache_dir`. The TCP server accepts one connection at a time per process — this keeps `ValidationService` access single-threaded and safe, while N-process pools deliver N-way parallelism without shared state.
 
-### Future options
+### Concurrency model (TCP)
 
-If horizontal scaling becomes a requirement, the transport is abstracted behind the `ValidationJsonRpcServer` class boundary. A future `GrpcTransportHandler` or `JsonRpcHttpServer` could expose the same `ValidationService` methods over a different transport without changing any rule or engine code.
+The TCP server is deliberately sequential: it accepts one connection, serves all requests on that connection until the client disconnects, then accepts the next. This avoids all threading hazards — `ValidationService` is not thread-safe (`sys.path`, `sys.modules`, and the entity helper registry are global mutable state). For parallel throughput, run multiple server processes rather than threading a single one.

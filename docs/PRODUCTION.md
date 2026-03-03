@@ -191,17 +191,15 @@ business_config_uri: "https://cdn.example.com/staging/business-config.yaml"
 
 Instances pointing at the *same* logic source can safely share a cache dir — one fetch serves all, and the auto-refresh debounce prevents stampedes. The problem is only when logic sources differ. Without separate dirs, `reload_logic()` does `shutil.rmtree` on the whole tree — instance A reloading while instance B is mid-validation would corrupt B's imports.
 
-### Path to socket-based transport
+### TCP socket transport
 
-For higher-throughput multi-client scenarios, the right move is to replace stdio with a TCP or Unix domain socket transport. This would allow:
+The JSON-RPC server supports TCP in addition to stdio. Start with `--port`:
 
-- Multiple clients to connect to one server
-- Request multiplexing over a single long-lived connection
-- Load balancing across a named pool of servers
+```bash
+python -m validation_lib.jsonrpc_server --port 5000
+```
 
-The `ValidationService` API itself needs no changes — only the transport layer in `jsonrpc_server.py` changes. The JSON-RPC protocol is identical; only the stream source differs. This is documented as a future option in [JSON-RPC Server — Future options](JSONRPC-SERVER.md).
-
-The stdio-vs-socket decision can be deferred until throughput requirements are measured. For most deployments, a small fixed pool of stdio-based subprocesses (managed by the host) is simpler to operate and sufficient.
+The server accepts one connection at a time (sequential). For N-way parallelism, run N independent processes on distinct ports, each with its own `logic_cache_dir`. The host routes requests across the pool. See [JSON-RPC Server — TCP socket](JSONRPC-SERVER.md) for full details and client examples.
 
 ---
 
@@ -221,7 +219,7 @@ The stdio-vs-socket decision can be deferred until throughput requirements are m
 
 - [x] Core validation logic
 - [x] Auto-refresh (configurable TTL)
-- [x] JSON-RPC server for multi-language use
+- [x] JSON-RPC server for multi-language use (stdio + TCP socket)
 - [x] Remote URI support for logic and configs
 - [x] Exception chaining and descriptive error messages
 - [ ] Coordination service HTTP implementation
