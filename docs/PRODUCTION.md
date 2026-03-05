@@ -260,12 +260,26 @@ def from_canonical_fields(fields: list[str]) -> list[str]:
 
 The `plugins/` directory is fetched and cached alongside `logic/` from `validation-logic` on GitHub, using the same `LogicPackageFetcher` mechanism. Adding a new plugin requires updating `STRUCTURAL_FILES` in `logic_fetcher.py`, exactly as for new `entity_helpers` modules.
 
-The caller identifies itself with a `caller_id` parameter (e.g. `"sysA"`) when calling `validate()`. If a plugin exists for that caller and entity type, the engine:
+Plugin selection is driven by `business-config.yaml`, following the same versioned-schema-URL keying used by `schema_to_helper_mapping` and the ruleset assignments. A new top-level section maps each caller ID to a schema-URL → plugin-module table:
+
+```yaml
+# business-config.yaml
+caller_plugins:
+  sysA:
+    "https://.../models/loan.schema.v1.0.0.json": "loan_v1"
+    "https://.../models/loan.schema.v2.0.0.json": "loan_v2"
+  sysB:
+    "https://.../models/loan.schema.v1.0.0.json": "loan_v1"
+```
+
+This links a versioned schema to a versioned plugin module in the same way that `schema_to_helper_mapping` links a versioned schema to a versioned entity helper — giving the same flexibility: a new schema version can adopt a new plugin version without affecting other callers or other schema versions. The engine resolves the plugin by looking up `caller_plugins[caller_id][$schema URL]` and loading `plugins/{caller_id}/{plugin_module}.py` from the logic cache.
+
+At runtime, the caller passes a `caller_id` alongside the entity data. If an entry exists in `caller_plugins` for that caller and the entity's `$schema`, the engine:
 1. Calls `to_canonical()` before running rules
 2. After validation, maps any field names in `results[*].fields` back to the caller's names via `from_canonical_fields()`
 3. Reconstructs `results[*].message` with the translated field names
 
-If no plugin exists for the caller, the data is passed through unchanged (current behaviour).
+If no entry exists for the caller, the data is passed through unchanged (current behaviour).
 
 ### Current state
 
