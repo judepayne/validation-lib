@@ -203,6 +203,76 @@ The server accepts one connection at a time (sequential). For N-way parallelism,
 
 ---
 
+## Per-system input plugins
+
+### The problem
+
+The library assumes all callers deliver entity data in the canonical format defined by the JSON Schemas in `validation-logic`. In practice, not all calling systems can do this — a legacy loan origination platform, a third-party data feed, or an upstream service may use different field names, a different nesting structure, or different value representations for the same underlying data.
+
+Today, the caller is responsible for transforming its own format into the canonical shape before calling `validate()`. This is workable for a small number of well-controlled callers but becomes fragile at scale: the transformation logic is scattered across calling systems, is not versioned alongside the rules, and cannot be exercised or tested within the validation framework itself.
+
+### Proposed approach
+
+Two changes are needed, which must be designed together:
+
+#### (i) Structured field references in validation results
+
+Currently, the field or fields that caused a rule failure are embedded as plain text inside the `message` string of a result. To support field-name mapping back to the calling system, each result must expose the offending fields as structured data — a list alongside the message, not concatenated into it. The final error message can then be reconstructed with string interpolation after the field names have been translated:
+
+```python
+# Current (field buried in message string):
+{"rule_id": "rule_003_v1", "status": "FAIL",
+ "message": "Invalid status 'pending'. Allowed: active, paid_off, ..."}
+
+# Proposed (field broken out):
+{"rule_id": "rule_003_v1", "status": "FAIL",
+ "fields": ["status"],
+ "message": "Invalid value for {field}. Allowed: active, paid_off, ..."}
+```
+
+This is a breaking change to the result schema and will require updates in all consumers (validation-service, validation-mcp-server, any direct API callers).
+
+#### (ii) A `plugins/` directory in the logic cache
+
+A new top-level directory under the logic cache root, structured by calling system:
+
+```
+/tmp/validation-lib/
+  logic/       # existing — rules, entity_helpers, schemas
+  plugins/     # new
+    sysA/
+      loan.py  # bidirectional converter for System A's loan format
+    sysB/
+      loan.py
+```
+
+Each plugin module defines a bidirectional converter for one entity type from one calling system — the same pattern as `entity_helpers`. It exposes two functions:
+
+```python
+def to_canonical(data: dict) -> dict:
+    """Convert System A's loan format to the canonical schema format."""
+    ...
+
+def from_canonical_fields(fields: list[str]) -> list[str]:
+    """Map canonical field names back to System A's field names."""
+    ...
+```
+
+The `plugins/` directory is fetched and cached alongside `logic/` from `validation-logic` on GitHub, using the same `LogicPackageFetcher` mechanism. Adding a new plugin requires updating `STRUCTURAL_FILES` in `logic_fetcher.py`, exactly as for new `entity_helpers` modules.
+
+The caller identifies itself with a `caller_id` parameter (e.g. `"sysA"`) when calling `validate()`. If a plugin exists for that caller and entity type, the engine:
+1. Calls `to_canonical()` before running rules
+2. After validation, maps any field names in `results[*].fields` back to the caller's names via `from_canonical_fields()`
+3. Reconstructs `results[*].message` with the translated field names
+
+If no plugin exists for the caller, the data is passed through unchanged (current behaviour).
+
+### Current state
+
+Not implemented. Both changes (structured fields in results, plugin loader) are required before this pattern can be used in production.
+
+---
+
 ## Security
 
 **HTTPS only for remote URIs** — `local-config.yaml` and `business-config.yaml` should always use `https://` URLs in production. The library fetches and executes remote Python rule files; ensure the source is trusted and served over TLS.
@@ -230,3 +300,5 @@ The server accepts one connection at a time (sequential). For N-way parallelism,
 - [ ] Authentication for JSON-RPC server if network-exposed
 - [ ] Hash pinning or signature verification for remote rule files
 - [ ] Load testing of batch validation at target volume
+- [ ] Structured field references in validation results (prerequisite for per-system plugins)
+- [ ] Per-system input plugin loader (`plugins/` in logic cache, bidirectional field mapping)
