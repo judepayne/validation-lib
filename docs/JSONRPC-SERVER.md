@@ -29,17 +29,14 @@ The server binds a TCP socket and accepts one connection at a time. When the cur
 
 #### Running multiple instances
 
-Each server process must be configured with a **distinct `logic_cache_dir`** in `local-config.yaml`. If multiple instances share the same cache directory, a `reload_logic()` call on one process will corrupt the cache for all others. The port number is a convenient differentiator for the path:
+Each server process must be configured with a **distinct logic cache directory**. If multiple instances share the same cache directory, a `reload_logic()` call on one process can corrupt the cache for all others. The simplest option is the `VALIDATION_LIB_LOGIC_CACHE_DIR` environment variable:
 
-```yaml
-# local-config.yaml for the instance on port 5001
-logic_cache_dir: "/tmp/validation-lib-5001"
-
-# local-config.yaml for the instance on port 5002
-logic_cache_dir: "/tmp/validation-lib-5002"
+```bash
+VALIDATION_LIB_LOGIC_CACHE_DIR=/tmp/validation-lib-5001 python -m validation_lib.jsonrpc_server --port 5001
+VALIDATION_LIB_LOGIC_CACHE_DIR=/tmp/validation-lib-5002 python -m validation_lib.jsonrpc_server --port 5002
 ```
 
-The mapping between port and cache path is entirely the client's choice — the library does not derive it automatically.
+You can also set `logic_cache_dir` in `local-config.yaml`. The mapping between port and cache path is entirely the client's choice — the library does not derive it automatically.
 
 ### Stopping the server
 
@@ -95,7 +92,7 @@ JSON-RPC 2.0 over stdin/stdout with newline-delimited messages.
 
 ## Methods
 
-All `ValidationService` public methods are available:
+All `ValidationService` public methods are available. `validate`, `batch_validate`, and `batch_file_validate` also accept optional `plugin_name` when the input data should be converted by a registered plugin before validation.
 
 ### `validate`
 
@@ -105,7 +102,7 @@ All `ValidationService` public methods are available:
   "method": "validate",
   "params": {
     "entity_type": "loan",
-    "entity_data": {"$schema": "https://...", "id": "LOAN-001", ...},
+    "entity_data": {"$schema": "https://example.com/loan.schema.json", "id": "LOAN-001"},
     "ruleset_name": "quick"
   }
 }
@@ -118,8 +115,9 @@ All `ValidationService` public methods are available:
   "jsonrpc": "2.0", "id": 2,
   "method": "batch_validate",
   "params": {
-    "entities": [{"$schema": "...", ...}, ...],
-    "id_fields": ["id"],
+    "items": [
+      {"correlation_id": "row-001", "data": {"$schema": "https://example.com/loan.schema.json", "id": "LOAN-001"}}
+    ],
     "ruleset_name": "quick"
   }
 }
@@ -132,10 +130,9 @@ All `ValidationService` public methods are available:
   "jsonrpc": "2.0", "id": 3,
   "method": "batch_file_validate",
   "params": {
-    "file_uri": "file:///data/loans.json",
-    "entity_types": ["loan"],
-    "id_fields": ["id"],
-    "ruleset_name": "thorough"
+    "file_uri": "file:///data/loans.jsonl",
+    "ruleset_name": "thorough",
+    "plugin_name": "vendor_x_loan"
   }
 }
 ```
@@ -218,7 +215,8 @@ response = call("validate", {
     },
     "ruleset_name": "quick",
 })
-for result in response["result"]:
+print(response["result"]["status"])
+for result in response["result"]["results"]:
     print(f"{result['rule_id']}: {result['status']}")
 
 # Shutdown
@@ -260,7 +258,8 @@ response = call("validate", {
     },
     "ruleset_name": "quick",
 })
-for result in response["result"]:
+print(response["result"]["status"])
+for result in response["result"]["results"]:
     print(f"{result['rule_id']}: {result['status']}")
 
 # Close the connection

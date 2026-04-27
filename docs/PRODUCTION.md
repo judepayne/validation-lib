@@ -84,7 +84,7 @@ from validation_lib import ValidationService
 service = ValidationService()
 
 # Use from request handlers, batch jobs, etc.
-results = service.validate("loan", loan_data, "quick")
+response = service.validate("loan", loan_data, "quick")
 ```
 
 `ValidationService` is not thread-safe — see [Performance and concurrency](#performance-and-concurrency) below.
@@ -177,7 +177,7 @@ None of these are achievable with stdio transport alone.
 
 The practical multi-instance pattern today is to spawn N independent server processes, each with its own stdin/stdout pair, and route requests across them in the host. This is straightforward but has an important implication: **each process needs its own logic cache directory**.
 
-The cache root defaults to `/tmp/validation-lib/` but is configurable via `logic_cache_dir` in `local-config.yaml`. If two instances run on the same machine pointing at different logic sources, give each a distinct path:
+The cache root defaults to `/tmp/validation-lib/` but is configurable via `logic_cache_dir` in `local-config.yaml` or `VALIDATION_LIB_LOGIC_CACHE_DIR`. If two independent long-lived instances run on the same machine, give each a distinct path:
 
 ```yaml
 # Instance A — production rules
@@ -189,7 +189,7 @@ logic_cache_dir: "/tmp/validation-lib-staging"
 business_config_uri: "https://cdn.example.com/staging/business-config.yaml"
 ```
 
-Instances pointing at the *same* logic source can safely share a cache dir — one fetch serves all, and the auto-refresh debounce prevents stampedes. The problem is only when logic sources differ. Without separate dirs, `reload_logic()` does `shutil.rmtree` on the whole tree — instance A reloading while instance B is mid-validation would corrupt B's imports.
+Do not rely on independent processes sharing a cache dir, even when they point at the same logic source. `reload_logic()` clears the whole cache tree with `shutil.rmtree`; one process reloading while another is mid-validation can corrupt the other process's imports.
 
 ### TCP socket transport
 
@@ -203,87 +203,21 @@ The server accepts one connection at a time (sequential). For N-way parallelism,
 
 ---
 
-## Per-system input plugins
+## Source-format input plugins
 
-### The problem
+Some callers cannot produce the canonical JSON entity shape directly. For those cases, validation-lib supports one-item input adapter plugins loaded from `validation-logic/plugins/`.
 
-The library assumes all callers deliver entity data in the canonical format defined by the JSON Schemas in `validation-logic`. In practice, not all calling systems can do this — a legacy loan origination platform, a third-party data feed, or an upstream service may use different field names, a different nesting structure, or different value representations for the same underlying data.
+A plugin converts one raw input item into one canonical entity dict containing `$schema`. After conversion, the normal validation flow runs unchanged. If conversion fails, validation-lib returns object-level `PLUGIN_FAIL` and does not run rules for that item.
 
-Today, the caller is responsible for transforming its own format into the canonical shape before calling `validate()`. This is workable for a small number of well-controlled callers but becomes fragile at scale: the transformation logic is scattered across calling systems, is not versioned alongside the rules, and cannot be exercised or tested within the validation framework itself.
+Production constraints:
 
-### Proposed approach
+- Plugins are selected explicitly with `plugin_name`; only one plugin can be used per validation call.
+- Plugins convert one item at a time. They do not parse whole CSV/XML/Parquet datasets.
+- `batch_file_validate()` supports JSON and JSONL item containers only. Other dataset formats should be split upstream and passed to `batch_validate()`.
+- Plugins are executable Python and have the same trust boundary as rules.
+- Plugin files are fetched and cached alongside rules, helpers, schemas, and config.
 
-Two changes are needed, which must be designed together:
-
-#### (i) Structured field references in validation results
-
-Currently, the field or fields that caused a rule failure are embedded as plain text inside the `message` string of a result. To support field-name mapping back to the calling system, each result must expose the offending fields as structured data — a list alongside the message, not concatenated into it. The final error message can then be reconstructed with string interpolation after the field names have been translated:
-
-```python
-# Current (field buried in message string):
-{"rule_id": "rule_003_v1", "status": "FAIL",
- "message": "Invalid status 'pending'. Allowed: active, paid_off, ..."}
-
-# Proposed (field broken out):
-{"rule_id": "rule_003_v1", "status": "FAIL",
- "fields": ["status"],
- "message": "Invalid value for {field}. Allowed: active, paid_off, ..."}
-```
-
-This is a breaking change to the result schema and will require updates in all consumers (validation-service, validation-mcp-server, any direct API callers).
-
-#### (ii) A `plugins/` directory in the logic cache
-
-A new top-level directory under the logic cache root, structured by calling system:
-
-```
-/tmp/validation-lib/
-  logic/       # existing — rules, entity_helpers, schemas
-  plugins/     # new
-    sysA/
-      loan.py  # bidirectional converter for System A's loan format
-    sysB/
-      loan.py
-```
-
-Each plugin module defines a bidirectional converter for one entity type from one calling system — the same pattern as `entity_helpers`. It exposes two functions:
-
-```python
-def to_canonical(data: dict) -> dict:
-    """Convert System A's loan format to the canonical schema format."""
-    ...
-
-def from_canonical_fields(fields: list[str]) -> list[str]:
-    """Map canonical field names back to System A's field names."""
-    ...
-```
-
-The `plugins/` directory is fetched and cached alongside `logic/` from `validation-logic` on GitHub, using the same `LogicPackageFetcher` mechanism. Adding a new plugin requires updating `STRUCTURAL_FILES` in `logic_fetcher.py`, exactly as for new `entity_helpers` modules.
-
-Plugin selection is driven by `business-config.yaml`, following the same versioned-schema-URL keying used by `schema_to_helper_mapping` and the ruleset assignments. A new top-level section maps each caller ID to a schema-URL → plugin-module table:
-
-```yaml
-# business-config.yaml
-caller_plugins:
-  sysA:
-    "https://.../models/loan.schema.v1.0.0.json": "loan_v1"
-    "https://.../models/loan.schema.v2.0.0.json": "loan_v2"
-  sysB:
-    "https://.../models/loan.schema.v1.0.0.json": "loan_v1"
-```
-
-This links a versioned schema to a versioned plugin module in the same way that `schema_to_helper_mapping` links a versioned schema to a versioned entity helper — giving the same flexibility: a new schema version can adopt a new plugin version without affecting other callers or other schema versions. The engine resolves the plugin by looking up `caller_plugins[caller_id][$schema URL]` and loading `plugins/{caller_id}/{plugin_module}.py` from the logic cache.
-
-At runtime, the caller passes a `caller_id` alongside the entity data. If an entry exists in `caller_plugins` for that caller and the entity's `$schema`, the engine:
-1. Calls `to_canonical()` before running rules
-2. After validation, maps any field names in `results[*].fields` back to the caller's names via `from_canonical_fields()`
-3. Reconstructs `results[*].message` with the translated field names
-
-If no entry exists for the caller, the data is passed through unchanged (current behaviour).
-
-### Current state
-
-Not implemented. Both changes (structured fields in results, plugin loader) are required before this pattern can be used in production.
+See [Plugins](PLUGINS.md) for the interface and examples.
 
 ---
 
@@ -291,9 +225,9 @@ Not implemented. Both changes (structured fields in results, plugin loader) are 
 
 **HTTPS only for remote URIs** — `local-config.yaml` and `business-config.yaml` should always use `https://` URLs in production. The library fetches and executes remote Python rule files; ensure the source is trusted and served over TLS.
 
-**Input size limits** — `batch_file_validate()` currently reads the entire file into memory with a 50 MB cap. Very large files should be split into smaller batches by the caller.
+**Input size limits** — `batch_file_validate()` currently reads JSON/JSONL files into memory with a 50 MB cap. Very large files should be split into smaller batches by the caller.
 
-**Remote code execution** — Rule files fetched from remote URLs are executed as Python code. The library trusts the HTTPS source. A TODO comment in `rule_fetcher.py` marks the location where hash pinning or signature verification could be added as a future hardening step.
+**Remote code execution** — Rule and plugin files fetched from remote URLs are executed as Python code. The library trusts the HTTPS source. A TODO comment in `rule_fetcher.py` marks the location where hash pinning or signature verification could be added as a future hardening step.
 
 **No authentication layer** — the JSON-RPC server has no built-in authentication. If exposed over a network (rather than over local stdio), authentication must be handled by the surrounding infrastructure.
 
@@ -309,10 +243,10 @@ Not implemented. Both changes (structured fields in results, plugin loader) are 
 - [ ] Coordination service HTTP implementation
 - [x] Parallel batch validation via ProcessPoolExecutor (opt-in via `batch_parallelism` in local-config.yaml)
 - [x] Configurable logic cache directory (`logic_cache_dir` in local-config.yaml) — required for safe multi-instance deployments on the same host
+- [x] Source-format input plugins (`plugins/` in validation-logic)
+- [x] JSONL item-container support for batch file validation
 - [ ] Structured logging (JSON format, correlation IDs)
 - [ ] Input validation and size limits beyond the current 50 MB file cap
 - [ ] Authentication for JSON-RPC server if network-exposed
-- [ ] Hash pinning or signature verification for remote rule files
+- [ ] Hash pinning or signature verification for remote rule/plugin files
 - [ ] Load testing of batch validation at target volume
-- [ ] Structured field references in validation results (prerequisite for per-system plugins)
-- [ ] Per-system input plugin loader (`plugins/` in logic cache, bidirectional field mapping)

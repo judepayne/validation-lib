@@ -7,13 +7,14 @@ This library provides a pure Python validation service with:
 - JSON schema validation
 - Custom Python business rules
 - Entity helper abstraction layer
+- Source-format adapter plugins
 - Hot reload capabilities
 
 Example:
     from validation_lib import ValidationService
 
     service = ValidationService()
-    results = service.validate("loan", loan_data, "quick")
+    response = service.validate("loan", loan_data, "quick")
 """
 
 from .api import ValidationService

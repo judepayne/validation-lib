@@ -1,6 +1,6 @@
 # API Reference
 
-`ValidationService` is the single public entry point for all validation operations. Import it from the package root:
+`ValidationService` is the single public entry point for all validation operations:
 
 ```python
 from validation_lib import ValidationService
@@ -8,117 +8,173 @@ from validation_lib import ValidationService
 service = ValidationService()
 ```
 
-The constructor loads the bundled `local-config.yaml`, fetches business logic from the configured URI, and populates the local cache. If the on-disk cache already exists and is fresh enough (see [Configuration](CONFIGURATION.md)), the fetch is skipped.
+The constructor loads bundled infrastructure config, resolves `validation-logic`, adds it to the runtime import path, and initializes rule and plugin loaders.
 
 ---
 
 ## Methods
 
-### `validate(entity_type, entity_data, ruleset_name) → List[Dict]`
+### `validate(entity_type, entity_data, ruleset_name, plugin_name=None) → Dict`
 
-Validate a single entity against a named ruleset.
+Validate one object against a named ruleset.
 
-**Parameters**
-
-| Name | Type | Description |
-|---|---|---|
-| `entity_type` | `str` | Entity type, e.g. `"loan"` |
-| `entity_data` | `dict` | Entity data dict; must include a `"$schema"` field |
-| `ruleset_name` | `str` | Ruleset to run, e.g. `"quick"` or `"thorough"` |
-
-**Returns** a list of rule result dicts, one per top-level rule:
-
-```python
-[
-    {
-        "rule_id": "rule_001_v1",
-        "description": "JSON Schema validation",
-        "status": "PASS",          # PASS | WARN | FAIL | NORUN | ERROR
-        "message": "",
-        "execution_time_ms": 12.5,
-        "children": [...]          # nested results for child rules
-    },
-    ...
-]
-```
-
-**Example**
-
-```python
-results = service.validate("loan", {
-    "$schema": "https://example.com/schemas/loan/v1.0.0",
-    "id": "LOAN-001",
-    "financial": {"principal_amount": 100000, "interest_rate": 0.045},
-    ...
-}, "quick")
-
-failures = [r for r in results if r["status"] == "FAIL"]
-```
-
----
-
-### `batch_validate(entities, id_fields, ruleset_name) → List[Dict]`
-
-Validate multiple entities in a single call.
-
-When `batch_parallelism: true` in `local-config.yaml`, entities are distributed across a pool of worker processes and validated in parallel. Results are always returned in the same order as the input list regardless of which worker finishes first.
-
-**Parameters**
+If `plugin_name` is omitted, `entity_data` must be canonical entity JSON. If `plugin_name` is supplied, `entity_data` is raw source data and the named plugin converts it into canonical entity JSON before rules run.
 
 | Name | Type | Description |
 |---|---|---|
-| `entities` | `list` | List of entity dicts, each with a `"$schema"` field |
-| `id_fields` | `list` | Field name(s) used to identify each entity in results, e.g. `["id"]` |
-| `ruleset_name` | `str` | Ruleset to run |
+| `entity_type` | `str` | Target entity type, e.g. `"loan"`. |
+| `entity_data` | `Any` | Canonical entity dict, or raw plugin input when `plugin_name` is supplied. |
+| `ruleset_name` | `str` | Ruleset to run, e.g. `"quick"` or `"thorough"`. |
+| `plugin_name` | `Optional[str]` | Optional source-format adapter registered in `business-config.yaml`. |
 
-**Returns** a list of per-entity result dicts:
+Returns an object-level envelope:
 
 ```python
-[
-    {
-        "entity_id": "LOAN-001",
-        "entity_type": "loan",
-        "results": [...]    # same structure as validate()
-    },
-    ...
-]
+{
+    "status": "PASS",          # PASS | WARN | FAIL | NORUN | ERROR | PLUGIN_FAIL
+    "entity_type": "loan",
+    "ruleset": "quick",
+    "results": [
+        {
+            "rule_id": "rule_001_v1",
+            "description": "Entity data must conform to its declared JSON schema",
+            "status": "PASS",  # rule-level PASS | WARN | FAIL | NORUN | ERROR
+            "message": "",
+            "execution_time_ms": 12.5,
+            "children": []
+        }
+    ]
+}
 ```
 
-**Example**
+When plugin conversion fails, rules do not run:
 
 ```python
-results = service.batch_validate(
-    [loan1, loan2, loan3],
-    id_fields=["id"],
-    ruleset_name="quick"
+{
+    "status": "PLUGIN_FAIL",
+    "entity_type": "loan",
+    "ruleset": "quick",
+    "results": [],
+    "plugin_name": "vendor_x_loan",
+    "plugin_message": "Vendor loan payload missing required field(s): amount"
+}
+```
+
+Example:
+
+```python
+response = service.validate("loan", loan_data, "quick")
+if response["status"] == "FAIL":
+    print("At least one rule failed")
+```
+
+Plugin example:
+
+```python
+response = service.validate(
+    "loan",
+    vendor_payload,
+    "quick",
+    plugin_name="vendor_x_loan",
 )
 ```
 
 ---
 
-### `batch_file_validate(file_uri, entity_types, id_fields, ruleset_name) → List[Dict]`
+### `batch_validate(items, ruleset_name, plugin_name=None) → Dict`
 
-Validate entities loaded from a file URI.
-
-**Parameters**
+Validate multiple independent items. Each item is processed separately; one item failing validation or plugin conversion does not stop later items. Unexpected per-item validation exceptions are returned as item-level `ERROR` envelopes with `error_message`.
 
 | Name | Type | Description |
 |---|---|---|
-| `file_uri` | `str` | URI of a JSON file — `file://`, `http://`, or `https://` |
-| `entity_types` | `list` | Entity types present in the file, e.g. `["loan"]` |
-| `id_fields` | `list` | Field name(s) used to identify each entity |
-| `ruleset_name` | `str` | Ruleset to run |
+| `items` | `list` | List of item dicts containing `data` and optional `correlation_id`. |
+| `ruleset_name` | `str` | Ruleset to run for all items. |
+| `plugin_name` | `Optional[str]` | Optional plugin applied independently to every item. |
 
-**Returns** the same per-entity list as `batch_validate()`.
-
-**Example**
+Recommended item shape:
 
 ```python
-results = service.batch_file_validate(
-    "file:///data/loans.json",
-    entity_types=["loan"],
-    id_fields=["id"],
-    ruleset_name="thorough"
+{
+    "correlation_id": "row-001",
+    "data": raw_or_canonical_payload,
+}
+```
+
+`correlation_id` is caller-provided and opaque. It is echoed in the corresponding result item so callers can match output back to input, even when plugin conversion fails. If omitted, validation-lib synthesizes `item-1`, `item-2`, etc.
+
+Returns a batch envelope:
+
+```python
+{
+    "status": "COMPLETED",
+    "ruleset": "quick",
+    "plugin_name": "vendor_x_loan",  # present only when supplied
+    "items": [
+        {
+            "correlation_id": "row-001",
+            "status": "PASS",
+            "entity_type": "loan",
+            "ruleset": "quick",
+            "results": [...]
+        },
+        {
+            "correlation_id": "row-002",
+            "status": "PLUGIN_FAIL",
+            "entity_type": "loan",
+            "ruleset": "quick",
+            "results": [],
+            "plugin_name": "vendor_x_loan",
+            "plugin_message": "Plugin output missing required $schema field"
+        }
+    ]
+}
+```
+
+Example:
+
+```python
+response = service.batch_validate(
+    [
+        {"correlation_id": "row-1", "data": loan1},
+        {"correlation_id": "row-2", "data": loan2},
+    ],
+    "quick",
+)
+```
+
+---
+
+### `batch_file_validate(file_uri, ruleset_name, plugin_name=None) → Dict`
+
+Load items from a JSON or JSONL file and delegate to `batch_validate()`.
+
+| Name | Type | Description |
+|---|---|---|
+| `file_uri` | `str` | URI of a `.json` or `.jsonl` file — `file://`, `http://`, or `https://`. |
+| `ruleset_name` | `str` | Ruleset to run. |
+| `plugin_name` | `Optional[str]` | Optional plugin applied independently to each loaded item. |
+
+Supported formats:
+
+- `.json`: one item, a list of items, one canonical/source object, or a list of objects.
+- `.jsonl`: one JSON object per nonblank line.
+
+JSONL example:
+
+```jsonl
+{"correlation_id": "row-001", "data": {"vendor_id": "LOAN-00001", "amount": 100000}}
+{"correlation_id": "row-002", "data": "<Loan><Id>LOAN-00002</Id></Loan>"}
+```
+
+If a loaded object lacks `data`, validation-lib wraps it as `{"data": object}`. Missing correlation IDs are synthesized (`item-N` for JSON, `line-N` for JSONL).
+
+Example:
+
+```python
+response = service.batch_file_validate(
+    "file:///data/vendor-loans.jsonl",
+    "quick",
+    plugin_name="vendor_x_loan",
 )
 ```
 
@@ -126,45 +182,7 @@ results = service.batch_file_validate(
 
 ### `discover_rules(entity_type, entity_data, ruleset_name) → Dict`
 
-Return metadata for every rule applicable to a given entity type and ruleset.
-
-**Parameters**
-
-| Name | Type | Description |
-|---|---|---|
-| `entity_type` | `str` | Entity type |
-| `entity_data` | `dict` | Entity data dict (used to determine schema version; only `"$schema"` is needed) |
-| `ruleset_name` | `str` | Ruleset to inspect |
-
-**Returns** a dict mapping `rule_id` → metadata:
-
-```python
-{
-    "rule_001_v1": {
-        "rule_id": "rule_001_v1",
-        "entity_type": "loan",
-        "description": "JSON Schema validation",
-        "required_data": [],
-        "field_dependencies": [
-            ["principal", "financial.principal_amount"],
-            ...
-        ],
-        "applicable_schemas": ["https://example.com/schemas/loan/v1.0.0"]
-    },
-    ...
-}
-```
-
-`field_dependencies` is populated by running each rule with access-tracking enabled and recording which logical properties (and their physical paths) were touched.
-
-**Example**
-
-```python
-rules = service.discover_rules("loan", {"$schema": schema_url}, "thorough")
-for rule_id, meta in rules.items():
-    print(f"{rule_id}: {meta['description']}")
-    print(f"  Fields: {meta['field_dependencies']}")
-```
+Return metadata for every rule applicable to a given entity type and ruleset. `entity_data` should be canonical entity data, or a minimal dict containing `$schema` for schema-version routing.
 
 ---
 
@@ -172,66 +190,17 @@ for rule_id, meta in rules.items():
 
 Return metadata and statistics for all configured rulesets.
 
-**Returns**
-
-```python
-{
-    "quick": {
-        "metadata": {
-            "description": "Essential checks for real-time validation",
-            "purpose": "...",
-            "author": "...",
-            "date": "..."
-        },
-        "stats": {
-            "total_rules": 2,
-            "supported_entities": ["loan"],
-            "supported_schemas": ["https://example.com/schemas/loan/v1.0.0"]
-        }
-    },
-    "thorough": { ... }
-}
-```
-
-**Example**
-
-```python
-rulesets = service.discover_rulesets()
-for name, info in rulesets.items():
-    print(f"{name}: {info['metadata']['description']} ({info['stats']['total_rules']} rules)")
-```
-
 ---
 
 ### `reload_logic() → None`
 
-Force an immediate re-fetch of all business logic from the configured source, replacing the local cache. Use this to pick up rule changes without restarting the host process.
-
-```python
-service.reload_logic()
-```
-
-After `reload_logic()` returns, all subsequent validation calls use the freshly downloaded logic.
-
-When `batch_parallelism` is enabled, `reload_logic()` shuts down the worker pool (waiting for any in-flight batch to complete), clears the cache, re-fetches logic, and then recreates the pool so workers initialise from the fresh logic.
+Force an immediate re-fetch of all business logic from the configured source, replacing the local cache. This also clears dynamic imports for rules, helpers, schemas, and plugins so updated code is loaded on subsequent calls.
 
 ---
 
 ### `close() → None`
 
-Shut down the worker process pool and release worker processes immediately.
-
-Call this when you are done with a `ValidationService` instance. Safe to call multiple times and safe to call when `batch_parallelism` is disabled (no-op in that case).
-
-```python
-service = ValidationService()
-try:
-    results = service.batch_validate(entities, ["id"], "quick")
-finally:
-    service.close()
-```
-
-If you do not call `close()`, worker processes will be cleaned up when the `ValidationService` instance is garbage collected or when the host process exits.
+Shut down the worker process pool and release worker processes immediately. Safe to call multiple times and safe when batch parallelism is disabled.
 
 ---
 
@@ -239,20 +208,17 @@ If you do not call `close()`, worker processes will be cleaned up when the `Vali
 
 Return the age of the local logic cache in seconds, or `None` if no cache exists.
 
-```python
-age = service.get_cache_age()
-if age is not None:
-    print(f"Cache is {age / 60:.0f} minutes old")
-```
-
 ---
 
-## Rule result statuses
+## Object-level statuses
 
 | Status | Meaning |
 |---|---|
-| `PASS` | Rule ran and the check passed. Child rules will run. |
-| `WARN` | Rule ran and found a advisory condition. Child rules still run. |
-| `FAIL` | Rule ran and the check failed. |
-| `NORUN` | Rule was skipped — either a parent rule did not pass, or required data was unavailable. |
-| `ERROR` | Rule raised an unhandled exception. The `message` field contains the traceback. |
+| `PASS` | All rule results passed. |
+| `WARN` | At least one rule returned `WARN`, and no rule failed or errored. |
+| `FAIL` | At least one rule returned `FAIL`. |
+| `NORUN` | No rules ran, or the highest rule status is `NORUN`. |
+| `ERROR` | At least one rule raised an unhandled exception, or a batch item hit an unexpected validation exception. Batch item `ERROR` envelopes may include `error_message`. |
+| `PLUGIN_FAIL` | Plugin conversion failed; validation rules did not run. |
+
+Rule-level statuses remain `PASS`, `WARN`, `FAIL`, `NORUN`, and `ERROR`. `PLUGIN_FAIL` exists only at the object level.

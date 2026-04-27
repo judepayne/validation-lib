@@ -38,7 +38,10 @@ class ConfigLoader:
         # Cache root is configurable — allows multiple instances on the same host
         # to use separate directories and avoid cache collisions.
         self.cache_dir = Path(
-            self.local_config.get("logic_cache_dir", "/tmp/validation-lib")
+            os.environ.get(
+                "VALIDATION_LIB_LOGIC_CACHE_DIR",
+                self.local_config.get("logic_cache_dir", "/tmp/validation-lib"),
+            )
         )
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -58,6 +61,12 @@ class ConfigLoader:
             # Backward compatibility: direct business_config_uri
             business_config_uri = self.local_config.get("business_config_uri")
 
+        # Environment override is useful for local tests and deployments that
+        # point at a mounted validation-logic checkout.
+        business_config_uri = os.environ.get(
+            "VALIDATION_LIB_BUSINESS_CONFIG_URI", business_config_uri
+        )
+
         # Load business config (may be remote)
         if business_config_uri:
             self.business_config = self._load_config_from_uri(business_config_uri)
@@ -66,6 +75,8 @@ class ConfigLoader:
             # Backward compatibility: if no business_config_uri, treat local config as business config
             self.business_config = self.local_config
             self.business_config_loaded_at = time.time()
+
+        self._business_config_uri = business_config_uri
 
         # Load coordination service config (may be remote)
         coordination_service_config_uri = self.local_config.get(
@@ -121,14 +132,16 @@ class ConfigLoader:
             cache_key = hashlib.sha256(uri.encode()).hexdigest()
             cache_path = self.cache_dir / f"config_{cache_key}.yaml"
 
+            max_age = int(self.local_config.get("logic_cache_max_age_seconds", 1800))
             if cache_path.exists():
-                # Use cached version
-                return self._load_yaml(str(cache_path))
-            else:
-                # Fetch and cache
-                content = self._fetch_uri(uri)
-                cache_path.write_text(content)
-                return yaml.safe_load(content)
+                cache_age = time.time() - cache_path.stat().st_mtime
+                if cache_age <= max_age:
+                    return self._load_yaml(str(cache_path))
+
+            # Fetch and cache when missing or stale.
+            content = self._fetch_uri(uri)
+            cache_path.write_text(content)
+            return yaml.safe_load(content)
 
         else:
             raise ValueError(f"Unsupported URI scheme: {parsed.scheme} in {uri}")
@@ -192,7 +205,10 @@ class ConfigLoader:
             return f"{logic_dir}{separator}{config_filename}"
 
         # Backward compatibility: direct business_config_uri
-        return self.local_config.get("business_config_uri")
+        return os.environ.get(
+            "VALIDATION_LIB_BUSINESS_CONFIG_URI",
+            self.local_config.get("business_config_uri"),
+        )
 
     def get_logic_base_uri(self) -> Optional[str]:
         """Derive logic base URI by stripping filename from business_config_uri.

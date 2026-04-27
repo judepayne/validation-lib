@@ -32,6 +32,8 @@ class LogicPackageFetcher:
         "entity_helpers/convert.py",
         "schema_helpers/__init__.py",
         "schema_helpers/schema_loader.py",
+        "plugins/__init__.py",
+        "plugins/base.py",
     ]
 
     # Default cache directory — used when no cache_root is supplied.
@@ -84,6 +86,10 @@ class LogicPackageFetcher:
         else:
             # Backward compatibility: direct business_config_uri
             business_config_uri = local_config.get("business_config_uri")
+
+        business_config_uri = os.environ.get(
+            "VALIDATION_LIB_BUSINESS_CONFIG_URI", business_config_uri
+        )
 
         if not business_config_uri:
             # No business config URI — legacy mode, no logic dir resolution
@@ -223,6 +229,11 @@ class LogicPackageFetcher:
                 files.add(f"entity_helpers/{module_name}.py")
             else:
                 files.add(f"entity_helpers/{helper_ref}.json")
+
+        # 6. Plugin files from plugins section
+        for _plugin_name, plugin_config in business_config.get("plugins", {}).items():
+            if isinstance(plugin_config, dict) and plugin_config.get("file"):
+                files.add(plugin_config["file"])
 
         return files
 

@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
@@ -44,7 +43,7 @@ class ValidationEngine:
         stale_modules = [
             m
             for m in sys.modules
-            if m.startswith(("entity_helpers", "rules.", "schema_helpers"))
+            if m.startswith(("entity_helpers", "rules.", "schema_helpers", "plugins"))
         ]
         for m in stale_modules:
             del sys.modules[m]

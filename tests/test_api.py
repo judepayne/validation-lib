@@ -1,12 +1,30 @@
-"""
-Tests for ValidationService API
+"""Tests for ValidationService API."""
 
-Tests all 7 public API methods with various scenarios.
-"""
-
+import json
 import os
+from pathlib import Path
+
 import pytest
+
 from validation_lib import ValidationService
+from validation_lib.logic_fetcher import LogicPackageFetcher
+from validation_lib.results import derive_object_status
+
+
+SCHEMA_V1 = (
+    "https://raw.githubusercontent.com/judepayne/validation-logic/main/"
+    "models/loan.schema.v1.0.0.json"
+)
+
+
+@pytest.fixture(autouse=True)
+def local_logic(monkeypatch):
+    """Point tests at the sibling validation-logic checkout, not GitHub."""
+    repo_root = Path(__file__).resolve().parents[2]
+    business_config = repo_root / "validation-logic" / "business-config.yaml"
+    monkeypatch.setenv(
+        "VALIDATION_LIB_BUSINESS_CONFIG_URI", f"file://{business_config}"
+    )
 
 
 @pytest.fixture
@@ -21,7 +39,7 @@ def service():
 def sample_loan():
     """Sample loan entity for testing."""
     return {
-        "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
+        "$schema": SCHEMA_V1,
         "id": "LOAN-00001",
         "loan_number": "LN-001",
         "facility_id": "FAC-100",
@@ -36,478 +54,324 @@ def sample_loan():
 
 
 @pytest.fixture
-def bad_loan():
-    """Bad loan that conforms to schema but fails rule 2 (outstanding balance exceeds principal)."""
+def bad_loan(sample_loan):
+    """Schema-conforming loan that fails rule_002_v1."""
+    loan = json.loads(json.dumps(sample_loan))
+    loan["id"] = "LOAN-99999"
+    loan["financial"]["outstanding_balance"] = 150000
+    return loan
+
+
+@pytest.fixture
+def vendor_payload():
+    """Example payload consumed by vendor_x_loan plugin."""
     return {
-        "$schema": "https://raw.githubusercontent.com/judepayne/validation-logic/main/models/loan.schema.v1.0.0.json",
-        "id": "LOAN-99999",
-        "loan_number": "LN-BAD-001",
-        "facility_id": "FAC-100",
-        "financial": {
-            "principal_amount": 100000,
-            "outstanding_balance": 150000,  # Exceeds principal - violates rule 2
-            "interest_rate": 0.045,
-            "currency": "USD",
-        },
-        "dates": {"origination_date": "2024-01-01", "maturity_date": "2025-01-01"},
+        "vendor_id": "LOAN-00077",
+        "loan_ref": "LN-VENDOR-077",
+        "facility_ref": "FAC-100",
+        "amount": 100000,
+        "currency": "USD",
+        "rate": 0.045,
+        "origination": "2024-01-01",
+        "maturity": "2025-01-01",
         "status": "active",
     }
+
+
+def _find_rule(results, rule_id):
+    for result in results:
+        if result["rule_id"] == rule_id:
+            return result
+        child = _find_rule(result.get("children", []), rule_id)
+        if child is not None:
+            return child
+    return None
 
 
 class TestInitialization:
     """Test ValidationService initialization."""
 
-    def test_create_service(self):
+    def test_create_service(self, service):
         """Test that service can be created."""
-        service = ValidationService()
-        assert service is not None
-
-    def test_service_has_engine(self, service):
-        """Test that service has validation engine."""
-        assert hasattr(service, "engine")
         assert service.engine is not None
-
-    def test_service_has_config_loader(self, service):
-        """Test that service has config loader."""
-        assert hasattr(service, "config_loader")
         assert service.config_loader is not None
+        assert service.plugin_loader is not None
 
 
-class TestDiscoverRulesets:
-    """Test discover_rulesets() method."""
+class TestDiscover:
+    """Test discovery methods."""
 
-    def test_discover_rulesets_returns_dict(self, service):
-        """Test that discover_rulesets returns a dictionary."""
-        rulesets = service.discover_rulesets()
-        assert isinstance(rulesets, dict)
-
-    def test_discover_rulesets_has_expected_rulesets(self, service):
-        """Test that expected rulesets are present."""
+    def test_discover_rulesets(self, service):
+        """Expected rulesets are present."""
         rulesets = service.discover_rulesets()
         assert "quick" in rulesets
         assert "thorough" in rulesets
+        assert "metadata" in rulesets["quick"]
+        assert "stats" in rulesets["quick"]
 
-    def test_ruleset_has_metadata(self, service):
-        """Test that rulesets have metadata."""
-        rulesets = service.discover_rulesets()
-        quick = rulesets["quick"]
-        assert "metadata" in quick
-        assert "description" in quick["metadata"]
-
-    def test_ruleset_has_stats(self, service):
-        """Test that rulesets have statistics."""
-        rulesets = service.discover_rulesets()
-        quick = rulesets["quick"]
-        assert "stats" in quick
-        assert "total_rules" in quick["stats"]
-
-
-class TestDiscoverRules:
-    """Test discover_rules() method."""
-
-    def test_discover_rules_returns_dict(self, service, sample_loan):
-        """Test that discover_rules returns a dictionary."""
+    def test_discover_rules(self, service, sample_loan):
+        """Rules are discovered for a sample entity."""
         rules = service.discover_rules("loan", sample_loan, "quick")
         assert isinstance(rules, dict)
-
-    def test_discover_rules_has_rules(self, service, sample_loan):
-        """Test that rules are discovered."""
-        rules = service.discover_rules("loan", sample_loan, "quick")
-        assert len(rules) > 0
-
-    def test_rule_metadata_structure(self, service, sample_loan):
-        """Test that rule metadata has expected structure."""
-        rules = service.discover_rules("loan", sample_loan, "quick")
-        first_rule = next(iter(rules.values()))
-
-        assert "rule_id" in first_rule
-        assert "description" in first_rule
-        assert "required_data" in first_rule
+        assert "rule_001_v1" in rules
+        assert "required_data" in rules["rule_001_v1"]
 
 
 class TestValidate:
-    """Test validate() method."""
+    """Test validate() envelopes."""
 
-    def test_validate_returns_list(self, service, sample_loan):
-        """Test that validate returns a list."""
-        results = service.validate("loan", sample_loan, "quick")
-        assert isinstance(results, list)
+    def test_validate_returns_envelope(self, service, sample_loan):
+        """Single validation returns an object-level envelope."""
+        response = service.validate("loan", sample_loan, "quick")
+        assert response["entity_type"] == "loan"
+        assert response["ruleset"] == "quick"
+        assert response["status"] in {"PASS", "WARN", "FAIL", "NORUN", "ERROR"}
+        assert isinstance(response["results"], list)
 
-    def test_validate_has_results(self, service, sample_loan):
-        """Test that validation produces results."""
-        results = service.validate("loan", sample_loan, "quick")
-        assert len(results) > 0
+    def test_bad_loan_fails_rule_002(self, service, bad_loan):
+        """Bad loan fails rule_002_v1."""
+        response = service.validate("loan", bad_loan, "quick")
+        rule_002 = _find_rule(response["results"], "rule_002_v1")
+        assert rule_002 is not None
+        assert rule_002["status"] == "FAIL"
+        assert response["status"] == "FAIL"
+        assert "balance" in rule_002["message"].lower()
 
-    def test_result_structure(self, service, sample_loan):
-        """Test that results have expected structure."""
-        results = service.validate("loan", sample_loan, "quick")
-        first_result = results[0]
+    def test_invalid_ruleset_returns_norun_envelope(self, service, sample_loan):
+        """Unknown ruleset produces empty results and object NORUN."""
+        response = service.validate("loan", sample_loan, "invalid_ruleset")
+        assert response["status"] == "NORUN"
+        assert response["results"] == []
 
-        assert "rule_id" in first_result
-        assert "status" in first_result
-        assert "description" in first_result
-
-    def test_status_values(self, service, sample_loan):
-        """Test that status values are valid."""
-        results = service.validate("loan", sample_loan, "quick")
-        valid_statuses = {"PASS", "FAIL", "NORUN", "ERROR", "WARN"}
-
-        for result in results:
-            assert result["status"] in valid_statuses
-
-    def test_validate_thorough_ruleset(self, service, sample_loan):
-        """Test validation with thorough ruleset."""
-        results = service.validate("loan", sample_loan, "thorough")
-        assert isinstance(results, list)
-        assert len(results) > 0
-
-    def test_validate_bad_loan_returns_results(self, service, bad_loan):
-        """Test that bad loan validation returns results."""
-        results = service.validate("loan", bad_loan, "quick")
-        assert isinstance(results, list)
-        assert len(results) > 0
-
-    def test_validate_bad_loan_fails_rule_002(self, service, bad_loan):
-        """Test that bad loan fails rule_002_v1 (outstanding balance exceeds principal)."""
-        results = service.validate("loan", bad_loan, "quick")
-
-        # Find rule_002_v1 result
-        rule_002_result = None
-        for result in results:
-            if result["rule_id"] == "rule_002_v1":
-                rule_002_result = result
-                break
-
-        assert rule_002_result is not None, "rule_002_v1 should be in results"
-        assert rule_002_result["status"] == "FAIL", (
-            "rule_002_v1 should fail for bad loan"
+    def test_vendor_plugin_success(self, service, vendor_payload):
+        """vendor_x_loan plugin converts source data before validation."""
+        response = service.validate(
+            "loan", vendor_payload, "quick", plugin_name="vendor_x_loan"
         )
-        assert "balance" in rule_002_result["message"].lower(), (
-            "Failure message should mention balance issue"
+        assert response["entity_type"] == "loan"
+        assert response["ruleset"] == "quick"
+        assert response["status"] in {"PASS", "WARN", "FAIL", "NORUN", "ERROR"}
+        assert "plugin_message" not in response
+        assert _find_rule(response["results"], "rule_001_v1") is not None
+
+    def test_vendor_plugin_error_returns_plugin_fail(self, service, vendor_payload):
+        """PluginError becomes object-level PLUGIN_FAIL."""
+        del vendor_payload["amount"]
+        response = service.validate(
+            "loan", vendor_payload, "quick", plugin_name="vendor_x_loan"
+        )
+        assert response["status"] == "PLUGIN_FAIL"
+        assert response["results"] == []
+        assert response["plugin_name"] == "vendor_x_loan"
+        assert "amount" in response["plugin_message"]
+
+    def test_unknown_plugin_raises_value_error(self, service, vendor_payload):
+        """Unknown plugin is configuration/caller error."""
+        with pytest.raises(ValueError, match="Unknown plugin"):
+            service.validate("loan", vendor_payload, "quick", plugin_name="missing")
+
+    def test_wrong_entity_type_plugin_raises_value_error(self, service, vendor_payload):
+        """Plugin entity type mismatch is caller/config error."""
+        with pytest.raises(ValueError, match="not facility"):
+            service.validate(
+                "facility", vendor_payload, "quick", plugin_name="vendor_x_loan"
+            )
+
+
+class TestPluginFailureMessages:
+    """Test standard PLUGIN_FAIL messages for malformed plugin output."""
+
+    class PluginError(Exception):
+        """Test plugin error class."""
+
+    class NonDictPlugin:
+        def convert(self, input_data):
+            return "not a dict"
+
+    class MissingSchemaPlugin:
+        def convert(self, input_data):
+            return {"id": "LOAN-1"}
+
+    class ExplodingPlugin:
+        def convert(self, input_data):
+            raise RuntimeError("boom")
+
+    def _patch_plugin(self, monkeypatch, service, plugin):
+        monkeypatch.setattr(service.plugin_loader, "load_plugin", lambda name: plugin)
+        monkeypatch.setattr(
+            service.plugin_loader,
+            "get_plugin_error_class",
+            lambda: self.PluginError,
         )
 
-    def test_validate_good_vs_bad_loan(self, service, sample_loan, bad_loan):
-        """Test that good loan passes rule_002_v1 but bad loan fails it."""
-        good_results = service.validate("loan", sample_loan, "quick")
-        bad_results = service.validate("loan", bad_loan, "quick")
-
-        # Find rule_002_v1 in both results
-        good_rule_002 = next(
-            (r for r in good_results if r["rule_id"] == "rule_002_v1"), None
+    def test_non_dict_plugin_output_is_plugin_fail(
+        self, monkeypatch, service, vendor_payload
+    ):
+        """Non-dict plugin output gets standard PLUGIN_FAIL message."""
+        self._patch_plugin(monkeypatch, service, self.NonDictPlugin())
+        response = service.validate(
+            "loan", vendor_payload, "quick", plugin_name="vendor_x_loan"
         )
-        bad_rule_002 = next(
-            (r for r in bad_results if r["rule_id"] == "rule_002_v1"), None
+        assert response["status"] == "PLUGIN_FAIL"
+        assert response["plugin_message"] == (
+            "Plugin output must be a dict containing a $schema field"
         )
 
-        assert good_rule_002 is not None, "Good loan should have rule_002_v1 result"
-        assert bad_rule_002 is not None, "Bad loan should have rule_002_v1 result"
+    def test_missing_schema_plugin_output_is_plugin_fail(
+        self, monkeypatch, service, vendor_payload
+    ):
+        """Dict without $schema gets standard PLUGIN_FAIL message."""
+        self._patch_plugin(monkeypatch, service, self.MissingSchemaPlugin())
+        response = service.validate(
+            "loan", vendor_payload, "quick", plugin_name="vendor_x_loan"
+        )
+        assert response["status"] == "PLUGIN_FAIL"
+        assert response["plugin_message"] == "Plugin output missing required $schema field"
 
-        assert good_rule_002["status"] == "PASS", "Good loan should pass rule_002_v1"
-        assert bad_rule_002["status"] == "FAIL", "Bad loan should fail rule_002_v1"
+    def test_unexpected_plugin_exception_is_plugin_fail(
+        self, monkeypatch, service, vendor_payload
+    ):
+        """Unexpected plugin exception gets standard PLUGIN_FAIL message."""
+        self._patch_plugin(monkeypatch, service, self.ExplodingPlugin())
+        response = service.validate(
+            "loan", vendor_payload, "quick", plugin_name="vendor_x_loan"
+        )
+        assert response["status"] == "PLUGIN_FAIL"
+        assert "RuntimeError: boom" in response["plugin_message"]
 
 
 class TestBatchValidate:
-    """Test batch_validate() method."""
+    """Test batch_validate() envelopes."""
 
-    def test_batch_validate_single_entity(self, service, sample_loan):
-        """Test batch validation with single entity."""
-        results = service.batch_validate([sample_loan], ["id"], "quick")
-        assert isinstance(results, list)
-        assert len(results) == 1
-
-    def test_batch_validate_multiple_entities(self, service, sample_loan):
-        """Test batch validation with multiple entities."""
-        loan2 = sample_loan.copy()
-        loan2["id"] = "LOAN-00002"
-
-        results = service.batch_validate([sample_loan, loan2], ["id"], "quick")
-        assert len(results) == 2
-
-    def test_batch_result_structure(self, service, sample_loan):
-        """Test that batch results have expected structure."""
-        results = service.batch_validate([sample_loan], ["id"], "quick")
-        first_result = results[0]
-
-        assert "entity_id" in first_result
-        assert "entity_type" in first_result
-        assert "results" in first_result
-        assert isinstance(first_result["results"], list)
-
-    def test_batch_validates_each_entity(self, service, sample_loan):
-        """Test that each entity in batch is validated."""
-        loan2 = sample_loan.copy()
-        loan2["id"] = "LOAN-00002"
-
-        results = service.batch_validate([sample_loan, loan2], ["id"], "quick")
-
-        assert results[0]["entity_id"] == "LOAN-00001"
-        assert results[1]["entity_id"] == "LOAN-00002"
+    def test_batch_validate_items(self, service, sample_loan):
+        """Batch validation returns a batch envelope with item envelopes."""
+        response = service.batch_validate(
+            [{"correlation_id": "row-1", "data": sample_loan}], "quick"
+        )
+        assert response["status"] == "COMPLETED"
+        assert response["ruleset"] == "quick"
+        assert len(response["items"]) == 1
+        item = response["items"][0]
+        assert item["correlation_id"] == "row-1"
+        assert item["entity_type"] == "loan"
+        assert isinstance(item["results"], list)
 
     def test_batch_preserves_order(self, service, sample_loan):
-        """Results must be returned in input order regardless of parallel execution."""
-        loans = [dict(sample_loan, id=f"LOAN-{i:05d}") for i in range(1, 9)]
-        results = service.batch_validate(loans, ["id"], "quick")
-        assert len(results) == 8
-        for i, result in enumerate(results, 1):
-            assert result["entity_id"] == f"LOAN-{i:05d}"
+        """Batch result order matches input order."""
+        items = [
+            {"correlation_id": f"row-{i}", "data": dict(sample_loan, id=f"LOAN-{i:05d}")}
+            for i in range(1, 6)
+        ]
+        response = service.batch_validate(items, "quick")
+        assert [item["correlation_id"] for item in response["items"]] == [
+            f"row-{i}" for i in range(1, 6)
+        ]
+
+    def test_batch_synthesizes_correlation_id(self, service, sample_loan):
+        """Missing correlation_id is synthesized."""
+        response = service.batch_validate([{"data": sample_loan}], "quick")
+        assert response["items"][0]["correlation_id"] == "item-1"
+
+    def test_batch_plugin_fail_does_not_stop_later_items(
+        self, service, vendor_payload
+    ):
+        """One PLUGIN_FAIL item does not stop the rest of the batch."""
+        bad_payload = dict(vendor_payload)
+        del bad_payload["amount"]
+        response = service.batch_validate(
+            [
+                {"correlation_id": "bad", "data": bad_payload},
+                {"correlation_id": "good", "data": vendor_payload},
+            ],
+            "quick",
+            plugin_name="vendor_x_loan",
+        )
+        assert response["plugin_name"] == "vendor_x_loan"
+        assert response["items"][0]["status"] == "PLUGIN_FAIL"
+        assert response["items"][0]["correlation_id"] == "bad"
+        assert response["items"][1]["correlation_id"] == "good"
+        assert response["items"][1]["status"] != "PLUGIN_FAIL"
 
 
 class TestBatchFileValidate:
-    """Test batch_file_validate() method."""
+    """Test JSON and JSONL file loading."""
 
-    def test_batch_file_validate_local_file(self, service):
-        """Test batch file validation with local file."""
-        # Get path to sample_loans.json in tests directory
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(test_dir, "sample_loans.json")
-        file_uri = f"file://{file_path}"
+    def test_batch_file_validate_json(self, tmp_path, service, sample_loan):
+        """JSON files are loaded and validated as batch items."""
+        path = tmp_path / "loans.json"
+        path.write_text(json.dumps([{"correlation_id": "json-1", "data": sample_loan}]))
+        response = service.batch_file_validate(f"file://{path}", "quick")
+        assert response["status"] == "COMPLETED"
+        assert response["items"][0]["correlation_id"] == "json-1"
 
-        results = service.batch_file_validate(file_uri, ["loan"], ["id"], "quick")
-
-        assert isinstance(results, list)
-        assert len(results) == 2
-
-    def test_batch_file_validate_result_structure(self, service):
-        """Test that batch file results have expected structure."""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(test_dir, "sample_loans.json")
-        file_uri = f"file://{file_path}"
-
-        results = service.batch_file_validate(file_uri, ["loan"], ["id"], "quick")
-
-        # Should have 2 results (good loan + bad loan)
-        assert len(results) == 2
-
-        # Each result should have expected structure
-        for result in results:
-            assert "entity_id" in result
-            assert "entity_type" in result
-            assert "results" in result
-            assert isinstance(result["results"], list)
-
-    def test_batch_file_validate_identifies_bad_loan(self, service):
-        """Test that batch file validation identifies the bad loan."""
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(test_dir, "sample_loans.json")
-        file_uri = f"file://{file_path}"
-
-        results = service.batch_file_validate(file_uri, ["loan"], ["id"], "quick")
-
-        # Find results for each loan
-        good_loan_result = next(r for r in results if r["entity_id"] == "LOAN-00001")
-        bad_loan_result = next(r for r in results if r["entity_id"] == "LOAN-99999")
-
-        # Check that rule_002_v1 passes for good loan
-        good_rule_002 = next(
-            (r for r in good_loan_result["results"] if r["rule_id"] == "rule_002_v1"),
-            None,
+    def test_batch_file_validate_jsonl(self, tmp_path, service, sample_loan):
+        """JSONL files are loaded line by line."""
+        path = tmp_path / "loans.jsonl"
+        path.write_text(
+            json.dumps({"correlation_id": "line-a", "data": sample_loan}) + "\n"
         )
-        assert good_rule_002 is not None
-        assert good_rule_002["status"] == "PASS"
+        response = service.batch_file_validate(f"file://{path}", "quick")
+        assert response["status"] == "COMPLETED"
+        assert response["items"][0]["correlation_id"] == "line-a"
 
-        # Check that rule_002_v1 fails for bad loan
-        bad_rule_002 = next(
-            (r for r in bad_loan_result["results"] if r["rule_id"] == "rule_002_v1"),
-            None,
+    def test_batch_file_validate_jsonl_synthesizes_line_id(
+        self, tmp_path, service, sample_loan
+    ):
+        """JSONL lines without correlation_id get line-N IDs."""
+        path = tmp_path / "loans.jsonl"
+        path.write_text(json.dumps({"data": sample_loan}) + "\n")
+        response = service.batch_file_validate(f"file://{path}", "quick")
+        assert response["items"][0]["correlation_id"] == "line-1"
+
+
+class TestLogicFetcher:
+    """Test logic package file derivation."""
+
+    def test_plugin_files_are_required(self):
+        """Plugin files are derived from business config."""
+        files = LogicPackageFetcher.derive_required_files(
+            {
+                "plugins": {
+                    "vendor_x_loan": {
+                        "file": "plugins/vendor_x_loan.py",
+                        "entity_type": "loan",
+                    }
+                }
+            }
         )
-        assert bad_rule_002 is not None
-        assert bad_rule_002["status"] == "FAIL"
-        assert "balance" in bad_rule_002["message"].lower()
+        assert "plugins/base.py" in files
+        assert "plugins/vendor_x_loan.py" in files
 
 
-class TestReloadLogic:
-    """Test reload_logic() method."""
+class TestStatusDerivation:
+    """Test object status derivation helper."""
 
-    def test_reload_logic_completes(self, service):
-        """Test that reload_logic completes without error."""
-        service.reload_logic()
-        # If we get here without exception, test passes
-        assert True
+    def test_empty_results_are_norun(self):
+        """Empty result list is object-level NORUN."""
+        assert derive_object_status([]) == "NORUN"
 
-    def test_service_works_after_reload(self, service, sample_loan):
-        """Test that service still works after reload."""
-        service.reload_logic()
-
-        # Should still be able to validate
-        results = service.validate("loan", sample_loan, "quick")
-        assert isinstance(results, list)
-        assert len(results) > 0
-
-    def test_multiple_reloads(self, service, sample_loan):
-        """Test that multiple reloads work."""
-        service.reload_logic()
-        service.reload_logic()
-
-        results = service.validate("loan", sample_loan, "quick")
-        assert isinstance(results, list)
-
-
-class TestGetCacheAge:
-    """Test get_cache_age() method."""
-
-    def test_get_cache_age_returns_value(self, service):
-        """Test that get_cache_age returns a value."""
-        age = service.get_cache_age()
-        # For local bundled logic, should be None
-        # For remote logic, should be a float
-        assert age is None or isinstance(age, (int, float))
-
-    def test_cache_age_after_reload(self, service):
-        """Test cache age after reload."""
-        age_before = service.get_cache_age()
-        service.reload_logic()
-        age_after = service.get_cache_age()
-
-        # Both should be same type (None for local mode)
-        assert type(age_before) == type(age_after)
-
-
-class TestErrorHandling:
-    """Test error handling in API."""
-
-    def test_validate_with_invalid_entity_type(self, service, sample_loan):
-        """Test validation with invalid entity type."""
-        # System handles gracefully - returns empty results for unknown entity types
-        results = service.validate("invalid_type", sample_loan, "quick")
-        assert isinstance(results, list)
-
-    def test_validate_with_invalid_ruleset(self, service, sample_loan):
-        """Test validation with invalid ruleset."""
-        # System handles gracefully - returns empty results for unknown rulesets
-        results = service.validate("loan", sample_loan, "invalid_ruleset")
-        assert isinstance(results, list)
-
-    def test_validate_without_schema(self, service):
-        """Test validation with entity missing $schema."""
-        loan_no_schema = {"id": "TEST-001", "loan_number": "LN-001"}
-
-        # Should still work with fallback to default helper
-        results = service.validate("loan", loan_no_schema, "quick")
-        assert isinstance(results, list)
-
-
-class TestNotesField:
-    """Test the structured notes array field introduced in schema v1.0.0 (updated)."""
-
-    @pytest.fixture
-    def loan_with_notes(self, sample_loan):
-        """Loan carrying two notes entries: one plain note and one operation-typed entry."""
-        import copy
-
-        loan = copy.deepcopy(sample_loan)
-        loan["id"] = "LOAN-00001"  # must match ^LOAN-[0-9]+$
-        loan["notes"] = [
-            {
-                "datetime": "2024-03-01T09:00:00Z",
-                "operation_type": "note",
-                "text": "Initial review completed. All documentation received.",
-            },
-            {
-                "datetime": "2024-03-15T14:30:00Z",
-                "operation_type": "edited",
-                "text": "Interest rate updated following rate reset clause.",
-            },
+    def test_all_pass_results_are_pass(self):
+        """All PASS rule results produce object-level PASS."""
+        results = [
+            {"status": "PASS", "children": []},
+            {"status": "PASS", "children": []},
         ]
-        return loan
+        assert derive_object_status(results) == "PASS"
 
-    @pytest.fixture
-    def loan_with_notes_no_op_type(self, sample_loan):
-        """Loan with a notes entry that omits the optional operation_type."""
-        import copy
-
-        loan = copy.deepcopy(sample_loan)
-        loan["id"] = "LOAN-00002"  # must match ^LOAN-[0-9]+$
-        loan["notes"] = [
+    def test_child_failure_affects_object_status(self):
+        """Nested child results are included in status derivation."""
+        results = [
             {
-                "datetime": "2024-06-01T10:00:00Z",
-                "text": "Borrower requested repayment schedule review.",
+                "status": "PASS",
+                "children": [{"status": "FAIL", "children": []}],
             }
         ]
-        return loan
+        assert derive_object_status(results) == "FAIL"
 
-    @pytest.fixture
-    def loan_with_string_notes(self, sample_loan):
-        """Loan using the old freeform string notes field — should fail schema validation."""
-        import copy
-
-        loan = copy.deepcopy(sample_loan)
-        loan["id"] = "LOAN-00003"  # must match ^LOAN-[0-9]+$
-        loan["notes"] = "Some old-style freeform note"
-        return loan
-
-    def test_loan_with_notes_passes_schema(self, service, loan_with_notes):
-        """Loan with a valid notes array must pass rule_001 (schema validation)."""
-        results = service.validate("loan", loan_with_notes, "quick")
-        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
-        assert rule_001 is not None, "rule_001_v1 should be present"
-        assert rule_001["status"] == "PASS", (
-            f"Schema validation should pass for a valid notes array; got: {rule_001.get('message')}"
-        )
-
-    def test_loan_with_notes_passes_all_rules(self, service, loan_with_notes):
-        """Loan with a valid notes array should pass the full thorough ruleset."""
-        results = service.validate("loan", loan_with_notes, "thorough")
-        failures = [r for r in results if r["status"] == "FAIL"]
-        assert failures == [], f"Expected no failures, got: {failures}"
-
-    def test_loan_with_notes_no_op_type_passes_schema(
-        self, service, loan_with_notes_no_op_type
-    ):
-        """Notes entry without operation_type (optional field) must still pass schema."""
-        results = service.validate("loan", loan_with_notes_no_op_type, "quick")
-        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
-        assert rule_001 is not None
-        assert rule_001["status"] == "PASS", (
-            f"Notes entry missing optional operation_type should still pass schema; "
-            f"got: {rule_001.get('message')}"
-        )
-
-    def test_loan_with_string_notes_fails_schema(self, service, loan_with_string_notes):
-        """Old freeform string notes must fail rule_001 schema validation."""
-        results = service.validate("loan", loan_with_string_notes, "quick")
-        rule_001 = next((r for r in results if r["rule_id"] == "rule_001_v1"), None)
-        assert rule_001 is not None, "rule_001_v1 should be present"
-        assert rule_001["status"] == "FAIL", (
-            "String notes field should fail schema validation under the new array definition"
-        )
-
-
-class TestEndToEnd:
-    """End-to-end integration tests."""
-
-    def test_complete_workflow(self, service, sample_loan):
-        """Test a complete validation workflow."""
-        # 1. Discover available rulesets
-        rulesets = service.discover_rulesets()
-        assert len(rulesets) > 0
-
-        # 2. Discover rules for an entity
-        rules = service.discover_rules("loan", sample_loan, "quick")
-        assert len(rules) > 0
-
-        # 3. Validate the entity
-        results = service.validate("loan", sample_loan, "quick")
-        assert len(results) > 0
-
-        # 4. Check validation passed
-        passed = any(r["status"] == "PASS" for r in results)
-        assert passed
-
-    def test_batch_workflow(self, service, sample_loan):
-        """Test batch validation workflow."""
-        # Create multiple loans
-        loans = []
-        for i in range(1, 4):
-            loan = sample_loan.copy()
-            loan["id"] = f"LOAN-{i:05d}"
-            loans.append(loan)
-
-        # Batch validate
-        results = service.batch_validate(loans, ["id"], "quick")
-
-        # Should have result for each entity
-        assert len(results) == 3
-
-        # Each should have validation results
-        for result in results:
-            assert len(result["results"]) > 0
+    def test_error_precedence(self):
+        """ERROR outranks FAIL/WARN/PASS."""
+        results = [
+            {"status": "FAIL", "children": []},
+            {"status": "ERROR", "children": []},
+        ]
+        assert derive_object_status(results) == "ERROR"

@@ -1,22 +1,30 @@
 """
-Public API for validation-lib
+Public API for validation-lib.
 
-This is the "front door" - the main entry point for all validation operations.
+This is the front door for validation operations.
 """
 
-import os
-import time
+import json
 import logging
 import multiprocessing
+import os
+import time
+import urllib.request
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from urllib.parse import unquote, urlparse
 
 from .config_loader import ConfigLoader
-from .logic_fetcher import LogicPackageFetcher
-from .validation_engine import ValidationEngine
 from .coordination_proxy import CoordinationProxy
+from .logic_fetcher import LogicPackageFetcher
+from .plugin_loader import PluginLoader
+from .results import build_plugin_fail_envelope, build_validation_envelope
+from .validation_engine import ValidationEngine
 
 logger = logging.getLogger(__name__)
+
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # ---------------------------------------------------------------------------
 # Module-level worker state and task functions
@@ -42,93 +50,46 @@ def _init_worker() -> None:
     _worker_service = ValidationService(_worker_mode=True)
 
 
-def _validate_entity(entity: dict, id_fields: list, ruleset_name: str) -> dict:
+def _validate_item(item: dict, ruleset_name: str, plugin_name: str = None) -> dict:
     """
-    Per-entity validation task executed in a worker process.
-
-    Replicates the per-entity logic from batch_validate(), using the
-    worker-local ValidationService instance. Must be a module-level function
-    to be picklable by the spawn context.
+    Per-item validation task executed in a worker process.
 
     Args:
-        entity: Entity data dict.
-        id_fields: Field names used to build the entity identifier.
+        item: Normalized batch item with correlation_id and data.
         ruleset_name: Ruleset to run.
+        plugin_name: Optional plugin name.
 
     Returns:
-        Per-entity result dict with entity_id, entity_type, and results.
+        Per-item object-level validation envelope.
     """
     global _worker_service
     assert _worker_service is not None, (
-        "_validate_entity called outside a worker process — "
+        "_validate_item called outside a worker process — "
         "_worker_service was not initialised by _init_worker()"
     )
-    entity_type = _worker_service._determine_entity_type(entity)
-    schema_url = entity.get("$schema", "")
-    required_terms = _worker_service.engine.get_required_data(
-        entity_type, schema_url, ruleset_name
-    )
-    required_data = _worker_service.coordination_proxy.get_associated_data(
-        entity_type, entity, required_terms
-    )
-    validation_results = _worker_service.engine.validate(
-        entity_type, entity, ruleset_name, required_data
-    )
-    entity_id = _worker_service._extract_id(entity, id_fields)
-    return {
-        "entity_id": entity_id,
-        "entity_type": entity_type,
-        "results": validation_results,
-    }
+    return _worker_service._validate_batch_item(item, ruleset_name, plugin_name)
 
 
 class ValidationService:
     """
     Main validation service class.
 
-    Provides business data validation with dynamic rule loading from local or remote sources.
-
-    Auto-refresh: Configs are automatically reloaded when stale (configurable intervals).
-
-    Example:
-        from validation_lib import ValidationService
-
-        service = ValidationService()
-        results = service.validate("loan", loan_data, "quick")
-
-        # Reload logic (useful in dev or to refresh from remote)
-        service.reload_logic()
-
-        # Check cache age (useful for monitoring)
-        age = service.get_cache_age()
-        if age and age > 3600:  # Older than 1 hour
-            service.reload_logic()
+    Provides business data validation with dynamic rule and plugin loading from
+    local or remote sources.
     """
 
-    # Debounce interval: how often the mid-session staleness check runs (hardcoded, seconds)
-    CHECK_INTERVAL = 300  # Check every 5 minutes
+    # Debounce interval: how often the mid-session staleness check runs (seconds)
+    CHECK_INTERVAL = 300
 
     def __init__(self, _worker_mode: bool = False):
         """
         Initialize validation service with bundled configuration.
 
-        The service automatically:
-        1. Loads bundled local-config.yaml
-        2. Fetches/caches business logic (rules, schemas, helpers)
-        3. Initializes the validation engine
-        4. Reloads logic from source if the disk cache is older than
-           logic_cache_max_age_seconds (from local-config.yaml, default 1800s)
-        5. Creates the worker process pool if batch_parallelism is enabled
-           (skipped when _worker_mode=True)
-
         Args:
-            _worker_mode: Internal flag — set True only by _init_worker() when
-                creating a ValidationService inside a pool worker process. Disables
-                auto-refresh and pool creation so workers never touch the shared
-                cache independently.
+            _worker_mode: Internal flag used only for batch worker processes.
 
         Raises:
-            RuntimeError: If config loading or logic fetching fails
+            RuntimeError: If config loading or logic fetching fails.
         """
         self._worker_mode = _worker_mode
         self._pool: Optional[ProcessPoolExecutor] = None
@@ -147,50 +108,35 @@ class ValidationService:
 
         self._create_pool()
 
-    def _initialize(self):
-        """Internal initialization logic (used by __init__ and reload_logic)."""
-        # Load bundled config
+    def _initialize(self) -> None:
+        """Internal initialization logic used by __init__ and reload_logic."""
         self.config_loader = ConfigLoader()
-
-        # Read max cache age from config (used at startup and in mid-session checks)
         self._max_age = self.config_loader.get_logic_cache_max_age()
-
-        # Initialize coordination proxy for fetching associated data
         self.coordination_proxy = CoordinationProxy(
             self.config_loader.get_coordination_service_config()
         )
-
-        # Fetch/cache logic from configured location
         self.logic_fetcher = LogicPackageFetcher(
             cache_root=self.config_loader.cache_dir
         )
-        logic_dir = self.logic_fetcher.resolve_logic_dir(
-            self.config_loader.local_config_path
-        )
-
-        # Initialize validation engine
+        if self._worker_mode and self.config_loader.get_logic_base_uri():
+            # Worker processes must not fetch or mutate the shared cache.
+            # The parent process populates it before submitting batch work.
+            logic_dir = str(self.config_loader.cache_dir / "logic")
+        else:
+            logic_dir = self.logic_fetcher.resolve_logic_dir(
+                self.config_loader.local_config_path
+            )
         self.engine = ValidationEngine(
             config_loader=self.config_loader, logic_dir=logic_dir
         )
-
-        # Track last freshness check time
+        self.plugin_loader = PluginLoader(self.config_loader.get_business_config())
         self._last_check_time = time.time()
 
     def _create_pool(self) -> None:
         """
         Create the ProcessPoolExecutor worker pool for batch validation.
 
-        No-op when:
-        - Running in worker mode (_worker_mode=True)
-        - batch_parallelism is false in local-config.yaml
-
-        Uses an explicit 'spawn' context for cross-platform safety. On Linux
-        the default is 'fork', which can cause deadlocks when the host process
-        uses threads (e.g. the MCP server). 'spawn' is consistent on all
-        platforms and avoids this class of issue.
-
-        Workers are lazy — they are not actually spawned until the first
-        submit() call, so pool creation itself is near-instant.
+        No-op in worker mode or when batch_parallelism is false.
         """
         if self._worker_mode:
             return
@@ -199,7 +145,7 @@ class ValidationService:
         max_workers = self.config_loader.get_batch_max_workers()
         ctx = multiprocessing.get_context("spawn")
         self._pool = ProcessPoolExecutor(
-            max_workers=max_workers,  # None → os.cpu_count()
+            max_workers=max_workers,
             mp_context=ctx,
             initializer=_init_worker,
         )
@@ -207,25 +153,20 @@ class ValidationService:
             f"Batch worker pool created (max_workers={max_workers or os.cpu_count()})"
         )
 
-    def _check_and_reload_if_stale(self):
+    def _check_and_reload_if_stale(self) -> None:
         """
         Check config freshness and reload if stale (debounced).
 
-        Checks at most every CHECK_INTERVAL seconds.
-        Reloads if business config or coordination config exceeds max age.
-        No-op in worker mode — workers never manage cache freshness.
+        Checks at most every CHECK_INTERVAL seconds. No-op in worker mode.
         """
         if self._worker_mode:
             return
         now = time.time()
-
-        # Debounce: Only check every CHECK_INTERVAL seconds
         if now - self._last_check_time < self.CHECK_INTERVAL:
             return
 
         self._last_check_time = now
 
-        # Check business config age
         business_age = self.config_loader.get_business_config_age()
         if business_age and business_age > self._max_age:
             logger.info(
@@ -234,7 +175,6 @@ class ValidationService:
             self.reload_logic()
             return
 
-        # Check coordination config age
         coord_age = self.config_loader.get_coordination_config_age()
         if coord_age and coord_age > self._max_age:
             logger.info(
@@ -243,91 +183,51 @@ class ValidationService:
             self.reload_logic()
             return
 
-    def validate(self, entity_type, entity_data, ruleset_name):
+    def validate(
+        self,
+        entity_type: str,
+        entity_data: Any,
+        ruleset_name: str,
+        plugin_name: str = None,
+    ) -> Dict[str, Any]:
         """
         Validate a single entity against business rules.
 
         Args:
-            entity_type: Type of entity (e.g., "loan", "facility")
-            entity_data: Entity data dict (must include $schema field for schema validation)
-            ruleset_name: Ruleset to use (e.g., "quick", "thorough")
+            entity_type: Type of entity (e.g., "loan").
+            entity_data: Canonical entity dict, or raw plugin input when
+                plugin_name is supplied.
+            ruleset_name: Ruleset to use (e.g., "quick", "thorough").
+            plugin_name: Optional input adapter plugin name.
 
         Returns:
-            List of validation result dicts, each containing:
-                - rule_id: Rule identifier
-                - description: Rule description
-                - status: "PASS", "FAIL", "WARN", "NORUN", or "ERROR"
-                - message: Failure message (if status is FAIL or ERROR)
-                - execution_time_ms: Execution time
-                - children: Nested child rule results (if hierarchical)
-
-        Raises:
-            ValueError: If entity_type or ruleset_name is invalid
-            RuntimeError: If validation execution fails critically
-
-        Example:
-            results = service.validate("loan", {
-                "$schema": "https://example.com/schemas/loan/v1.0.0",
-                "id": "LOAN-001",
-                "principal_amount": 100000,
-                ...
-            }, "quick")
-
-            for result in results:
-                if result['status'] == 'FAIL':
-                    print(f"{result['rule_id']}: {result['message']}")
+            Object-level validation envelope with status, entity_type, ruleset,
+            and hierarchical rule results. Plugin conversion failures return
+            status "PLUGIN_FAIL" with plugin_message and empty results.
         """
-        # Auto-refresh stale configs
         self._check_and_reload_if_stale()
 
-        # Get schema URL from entity data
-        schema_url = entity_data.get("$schema", "")
+        canonical_entity = entity_data
+        if plugin_name is not None:
+            self.plugin_loader.validate_plugin_for_entity(plugin_name, entity_type)
+            canonical_entity, plugin_fail = self._convert_with_plugin(
+                plugin_name, entity_type, ruleset_name, entity_data
+            )
+            if plugin_fail is not None:
+                return plugin_fail
 
-        # Phase 1: Get required data for this validation
-        required_terms = self.engine.get_required_data(
-            entity_type, schema_url, ruleset_name
+        results = self._validate_canonical_entity(
+            entity_type, canonical_entity, ruleset_name
         )
-
-        # Phase 2: Fetch required data from coordination service
-        required_data = self.coordination_proxy.get_associated_data(
-            entity_type, entity_data, required_terms
-        )
-
-        # Phase 3: Execute validation
-        return self.engine.validate(
-            entity_type, entity_data, ruleset_name, required_data
-        )
+        return build_validation_envelope(entity_type, ruleset_name, results)
 
     def discover_rules(self, entity_type, entity_data, ruleset_name):
         """
         Discover available validation rules for an entity type.
 
-        Returns metadata about rules without executing them. Useful for understanding
-        what validations will run and what data they require.
-
-        Args:
-            entity_type: Type of entity (e.g., "loan")
-            entity_data: Sample entity data dict (used for schema detection)
-            ruleset_name: Ruleset to query (e.g., "quick", "thorough")
-
-        Returns:
-            Dict mapping rule_id to rule metadata:
-                - rule_id: Rule identifier
-                - entity_type: Entity type this rule validates
-                - description: Human-readable description
-                - required_data: List of additional data dependencies
-                - field_dependencies: Fields this rule accesses
-                - applicable_schemas: Schema URLs this rule applies to
-
-        Example:
-            rules = service.discover_rules("loan", sample_loan, "quick")
-            for rule_id, metadata in rules.items():
-                print(f"{rule_id}: {metadata['description']}")
-                print(f"  Required fields: {metadata['field_dependencies']}")
+        Returns metadata about rules without executing them.
         """
-        # Auto-refresh stale configs
         self._check_and_reload_if_stale()
-
         return self.engine.discover_rules(entity_type, entity_data, ruleset_name)
 
     def discover_rulesets(self):
@@ -335,362 +235,352 @@ class ValidationService:
         Discover all available rulesets with metadata and statistics.
 
         Returns:
-            Dict mapping ruleset_name to ruleset info:
-                - metadata: Ruleset metadata (description, purpose, author, date)
-                - stats: Statistics (total_rules, supported_entities, supported_schemas)
-
-        Example:
-            rulesets = service.discover_rulesets()
-            for name, info in rulesets.items():
-                print(f"{name}: {info['metadata']['description']}")
-                print(f"  Total rules: {info['stats']['total_rules']}")
+            Dict mapping ruleset name to metadata and statistics.
         """
-        # Auto-refresh stale configs
         self._check_and_reload_if_stale()
-
         return self.engine.discover_rulesets()
 
-    def batch_validate(self, entities, id_fields, ruleset_name):
+    def batch_validate(
+        self, items: List[Dict[str, Any]], ruleset_name: str, plugin_name: str = None
+    ) -> Dict[str, Any]:
         """
-        Validate multiple entities in a single operation.
-
-        Orchestrates validation across multiple entities, extracting entity types
-        from each entity's $schema field.
+        Validate multiple independent items in a single operation.
 
         Args:
-            entities: List of entity dicts (each must have $schema field)
-            id_fields: List of field names to use for entity identification in results
-            ruleset_name: Ruleset to use for all entities
+            items: List of batch item dicts. Each item should contain "data"
+                and may contain "correlation_id".
+            ruleset_name: Ruleset to use for all items.
+            plugin_name: Optional plugin applied independently to each item.
 
         Returns:
-            List of per-entity validation results, each containing:
-                - entity_id: Extracted entity identifier
-                - entity_type: Detected entity type
-                - results: List of validation results (same format as validate())
-
-        Raises:
-            ValueError: If entities is empty or entity types can't be determined
-            RuntimeError: If batch validation fails
-
-        Example:
-            results = service.batch_validate([
-                {"$schema": "...", "id": "LOAN-001", ...},
-                {"$schema": "...", "id": "LOAN-002", ...}
-            ], ["id"], "quick")
-
-            for entity_result in results:
-                print(f"Entity {entity_result['entity_id']}:")
-                for rule_result in entity_result['results']:
-                    print(f"  {rule_result['rule_id']}: {rule_result['status']}")
+            Batch envelope with status "COMPLETED" and per-item envelopes.
         """
-        # Auto-refresh stale configs
         self._check_and_reload_if_stale()
+        normalized_items = self._normalize_batch_items(items)
+
+        if plugin_name is not None:
+            # Validate plugin config and importability once before submitting
+            # work. In batch there is no requested entity_type parameter, so
+            # per-item plugin failures use this declared entity type.
+            self.plugin_loader.get_plugin_config(plugin_name)
+            self.plugin_loader.load_plugin(plugin_name)
 
         if self._pool is not None:
-            # Parallel path: distribute entities across worker processes.
-            # Futures are submitted and collected in input order, preserving
-            # result ordering regardless of which worker finishes first.
             futures = [
-                self._pool.submit(_validate_entity, entity, id_fields, ruleset_name)
-                for entity in entities
+                self._pool.submit(_validate_item, item, ruleset_name, plugin_name)
+                for item in normalized_items
             ]
-            return [f.result() for f in futures]
+            item_results = [future.result() for future in futures]
+        else:
+            item_results = [
+                self._validate_batch_item(item, ruleset_name, plugin_name)
+                for item in normalized_items
+            ]
 
-        # Sequential fallback: pool disabled or batch_parallelism is false.
-        results = []
-        for entity in entities:
-            # Determine entity type from $schema or other hints
-            entity_type = self._determine_entity_type(entity)
+        response = {
+            "status": "COMPLETED",
+            "ruleset": ruleset_name,
+            "items": item_results,
+        }
+        if plugin_name is not None:
+            response["plugin_name"] = plugin_name
+        return response
 
-            # Get schema URL
-            schema_url = entity.get("$schema", "")
-
-            # Get required data for this validation
-            required_terms = self.engine.get_required_data(
-                entity_type, schema_url, ruleset_name
-            )
-            required_data = self.coordination_proxy.get_associated_data(
-                entity_type, entity, required_terms
-            )
-
-            # Validate the entity
-            validation_results = self.engine.validate(
-                entity_type, entity, ruleset_name, required_data
-            )
-
-            # Extract entity ID
-            entity_id = self._extract_id(entity, id_fields)
-
-            results.append(
-                {
-                    "entity_id": entity_id,
-                    "entity_type": entity_type,
-                    "results": validation_results,
-                }
-            )
-
-        return results
-
-    def batch_file_validate(self, file_uri, entity_types, id_fields, ruleset_name):
+    def batch_file_validate(
+        self, file_uri: str, ruleset_name: str, plugin_name: str = None
+    ) -> Dict[str, Any]:
         """
-        Validate entities loaded from a file.
-
-        Loads entities from file URI (local or remote), then performs batch validation.
+        Validate items loaded from a JSON or JSONL file.
 
         Args:
-            file_uri: URI to file containing entities (file://, http://, https://)
-            entity_types: List of entity types in the file
-            id_fields: List of field names to use for entity identification
-            ruleset_name: Ruleset to use
+            file_uri: URI to JSON/JSONL file (file://, http://, https://).
+            ruleset_name: Ruleset to use.
+            plugin_name: Optional plugin applied to each loaded item.
 
         Returns:
-            List of per-entity validation results (same format as batch_validate())
-
-        Raises:
-            RuntimeError: If file loading or validation fails
-
-        Example:
-            results = service.batch_file_validate(
-                "file:///data/loans.json",
-                ["loan"],
-                ["id"],
-                "thorough"
-            )
+            Batch validation envelope.
         """
-        # Load entities from file
-        entities = self._load_entities_from_file(file_uri)
-
-        # Use batch_validate to process them
-        return self.batch_validate(entities, id_fields, ruleset_name)
+        items = self._load_items_from_file(file_uri)
+        return self.batch_validate(items, ruleset_name, plugin_name=plugin_name)
 
     def reload_logic(self):
         """
         Reload business logic from source.
 
-        Performs a full reload:
-        1. Clears cache directory
-        2. Re-fetches logic from source (local path or remote URL)
-        3. Reloads business-config.yaml
-        4. Re-imports all rule modules and entity helpers (hot reload)
-
-        Useful for:
-        - Development: Pick up rule changes without restarting
-        - Production: Refresh logic from remote URL after updates
-
-        Raises:
-            RuntimeError: If logic fetch or reload fails
-
-        Example:
-            # In development - pick up local changes
-            service.reload_logic()
-
-            # In production - refresh from remote after deploy
-            if service.get_cache_age() > 3600:  # Older than 1 hour
-                service.reload_logic()
+        Clears cache, refetches logic, reinitializes loaders, and recreates the
+        worker pool so workers pick up fresh code.
         """
-        # Shut down the worker pool before clearing the cache.
-        # shutdown(wait=True) blocks until any in-flight batch completes,
-        # ensuring no worker is mid-validation when the cache is wiped.
         if self._pool is not None:
             self._pool.shutdown(wait=True)
             self._pool = None
 
-        # Clear cache
         self.logic_fetcher.clear_cache()
-
-        # Re-initialize everything
+        self._clear_config_cache()
         self._initialize()
-
-        # Recreate the pool so workers pick up the fresh logic from the
-        # newly populated cache.
         self._create_pool()
+
+    def _clear_config_cache(self) -> None:
+        """Delete cached remote config files before a forced reload."""
+        for cache_file in self.config_loader.cache_dir.glob("config_*.yaml"):
+            cache_file.unlink()
 
     def get_cache_age(self):
         """
         Get age of cached logic in seconds.
 
-        Returns the time since the logic cache was created/last updated.
-        Returns None if logic hasn't been cached yet.
-
         Returns:
-            float: Age in seconds, or None if not cached
-
-        Example:
-            age = service.get_cache_age()
-            if age is None:
-                print("Logic not cached yet")
-            elif age > 3600:  # 1 hour
-                print(f"Cache is {age/3600:.1f} hours old, consider reloading")
-                service.reload_logic()
-            else:
-                print(f"Cache is {age:.0f} seconds old")
+            float age in seconds, or None if logic has not been cached.
         """
         return self.logic_fetcher.get_cache_age()
 
+    def _validate_canonical_entity(
+        self, entity_type: str, entity_data: dict, ruleset_name: str
+    ) -> List[Dict[str, Any]]:
+        """Run the existing canonical validation flow and return rule results."""
+        if not isinstance(entity_data, dict):
+            raise ValueError("Canonical entity data must be a dict")
+
+        schema_url = entity_data.get("$schema", "")
+        required_terms = self.engine.get_required_data(
+            entity_type, schema_url, ruleset_name
+        )
+        required_data = self.coordination_proxy.get_associated_data(
+            entity_type, entity_data, required_terms
+        )
+        return self.engine.validate(entity_type, entity_data, ruleset_name, required_data)
+
+    def _validate_batch_item(
+        self, item: Dict[str, Any], ruleset_name: str, plugin_name: str = None
+    ) -> Dict[str, Any]:
+        """Validate one normalized batch item and return an item envelope."""
+        correlation_id = item["correlation_id"]
+        data = item["data"]
+        plugin_entity_type = None
+
+        try:
+            if plugin_name is not None:
+                plugin_config = self.plugin_loader.get_plugin_config(plugin_name)
+                plugin_entity_type = plugin_config["entity_type"]
+                data, plugin_fail = self._convert_with_plugin(
+                    plugin_name, plugin_entity_type, ruleset_name, data
+                )
+                if plugin_fail is not None:
+                    plugin_fail["correlation_id"] = correlation_id
+                    return plugin_fail
+
+            entity_type = self._determine_entity_type(data)
+            results = self._validate_canonical_entity(entity_type, data, ruleset_name)
+            envelope = build_validation_envelope(entity_type, ruleset_name, results)
+            envelope["correlation_id"] = correlation_id
+            return envelope
+        except Exception as e:
+            return {
+                "correlation_id": correlation_id,
+                "status": "ERROR",
+                "entity_type": plugin_entity_type or "unknown",
+                "ruleset": ruleset_name,
+                "results": [],
+                "error_message": f"{type(e).__name__}: {e}",
+            }
+
+    def _convert_with_plugin(
+        self,
+        plugin_name: str,
+        entity_type: str,
+        ruleset_name: str,
+        input_data: Any,
+    ):
+        """Run a plugin conversion and return (converted_entity, fail_envelope)."""
+        plugin = self.plugin_loader.load_plugin(plugin_name)
+        plugin_error = self.plugin_loader.get_plugin_error_class()
+
+        try:
+            converted = plugin.convert(input_data)
+        except plugin_error as e:
+            return None, build_plugin_fail_envelope(
+                entity_type, ruleset_name, plugin_name, str(e)
+            )
+        except Exception as e:
+            return None, build_plugin_fail_envelope(
+                entity_type,
+                ruleset_name,
+                plugin_name,
+                f"Plugin execution failed: {type(e).__name__}: {e}",
+            )
+
+        if not isinstance(converted, dict):
+            return None, build_plugin_fail_envelope(
+                entity_type,
+                ruleset_name,
+                plugin_name,
+                "Plugin output must be a dict containing a $schema field",
+            )
+
+        if "$schema" not in converted:
+            return None, build_plugin_fail_envelope(
+                entity_type,
+                ruleset_name,
+                plugin_name,
+                "Plugin output missing required $schema field",
+            )
+
+        return converted, None
+
+    def _normalize_batch_items(
+        self, items: List[Dict[str, Any]], default_prefix: str = "item"
+    ) -> List[Dict[str, Any]]:
+        """Normalize user-supplied batch items to correlation_id/data dicts."""
+        if not isinstance(items, list):
+            raise ValueError("items must be a list")
+
+        normalized = []
+        for index, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                raise ValueError("Each batch item must be a dict")
+
+            if "data" in item:
+                data = item["data"]
+                correlation_id = item.get("correlation_id")
+            else:
+                data = item
+                correlation_id = item.get("correlation_id")
+                if correlation_id is not None:
+                    data = {k: v for k, v in item.items() if k != "correlation_id"}
+
+            if correlation_id is None:
+                correlation_id = f"{default_prefix}-{index}"
+
+            normalized.append(
+                {
+                    "correlation_id": str(correlation_id),
+                    "data": data,
+                }
+            )
+
+        return normalized
+
     def _determine_entity_type(self, entity):
         """
-        Determine entity type from entity data.
-
-        Tries multiple strategies:
-        1. Extract from $schema URL
-        2. Use explicit entity_type field
-        3. Fallback to config defaults
-
-        Args:
-            entity: Entity data dict
-
-        Returns:
-            Entity type string
+        Determine entity type from canonical entity data.
 
         Raises:
-            ValueError: If entity type cannot be determined
+            ValueError: If entity type cannot be determined.
         """
-        # Strategy 1: Extract from $schema URL
+        if not isinstance(entity, dict):
+            raise ValueError("Cannot determine entity type from non-dict entity data")
+
         schema_url = entity.get("$schema")
         if schema_url:
             entity_type = self._extract_entity_type_from_schema(schema_url)
             if entity_type:
                 return entity_type
 
-        # Strategy 2: Explicit entity_type field
         if "entity_type" in entity:
             return entity["entity_type"]
 
-        # Strategy 3: Try to infer from known schemas
-        # (Could check schema_to_helper_mapping in config)
         raise ValueError(
             "Cannot determine entity type - entity must have $schema or entity_type field"
         )
 
     def _extract_entity_type_from_schema(self, schema_url):
-        """
-        Extract entity type from schema URL.
-
-        Example:
-            "https://example.com/schemas/loan/v1.0.0" → "loan"
-
-        Args:
-            schema_url: Schema URL string
-
-        Returns:
-            Entity type string, or None if cannot extract
-        """
-        from urllib.parse import urlparse
-
-        if not schema_url or urlparse(schema_url).scheme not in ("http", "https"):
+        """Extract entity type from schema URL."""
+        parsed = urlparse(schema_url)
+        if not schema_url or parsed.scheme not in ("http", "https", "file"):
             return None
 
-        # Parse URL path: .../schemas/loan/v1.0.0 → "loan"
-        path = urlparse(schema_url).path
-        segments = [s for s in path.split("/") if s]
+        segments = [s for s in parsed.path.split("/") if s]
 
-        # Look for version-like segment and take the one before it
+        if segments and segments[-1].endswith(".json"):
+            filename = segments[-1]
+            entity_type = filename.split(".")[0]
+            if entity_type:
+                return entity_type
+
+        if "/schemas/" in parsed.path:
+            parts = parsed.path.split("/schemas/")
+            if len(parts) >= 2:
+                return parts[1].split("/")[0]
+
         for i, segment in enumerate(segments):
-            if segment.startswith("v") and "." in segment:
-                if i > 0:
-                    return segments[i - 1]
+            if segment.startswith("v") and "." in segment and i > 0:
+                return segments[i - 1]
 
-        # Fallback: second-to-last segment
         if len(segments) >= 2:
             return segments[-2]
-
         return None
-
-    def _extract_id(self, entity, id_fields):
-        """
-        Extract entity identifier from entity data.
-
-        Args:
-            entity: Entity data dict
-            id_fields: List of field names to try
-
-        Returns:
-            String identifier (concatenated if multiple fields)
-        """
-        id_parts = []
-        for field in id_fields:
-            if field in entity:
-                id_parts.append(str(entity[field]))
-
-        if not id_parts:
-            return "unknown"
-
-        return "-".join(id_parts)
 
     def close(self) -> None:
         """
         Shut down the worker process pool cleanly.
 
-        Call this when you are done with a ValidationService instance to release
-        worker processes immediately rather than waiting for garbage collection.
-        Safe to call multiple times or when batch_parallelism is disabled.
-
-        Example:
-            service = ValidationService()
-            try:
-                results = service.batch_validate(entities, ["id"], "quick")
-            finally:
-                service.close()
+        Safe to call multiple times or when batch parallelism is disabled.
         """
         if self._pool is not None:
             self._pool.shutdown(wait=True)
             self._pool = None
 
-    def _load_entities_from_file(self, file_uri):
+    def _load_items_from_file(self, file_uri):
         """
-        Load entities from file URI.
+        Load normalized batch items from a JSON or JSONL file URI.
 
-        Supports:
-        - file:// URIs (local files)
-        - http://, https:// URIs (remote files)
-
-        Args:
-            file_uri: URI to file
-
-        Returns:
-            List of entity dicts
-
-        Raises:
-            RuntimeError: If file loading fails
+        Supports file://, http://, and https:// URIs.
         """
-        import json
-        import urllib.request
-        from pathlib import Path
-        from urllib.parse import urlparse, unquote
-
-        MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
-
         parsed = urlparse(file_uri)
-
         try:
-            if parsed.scheme == "file":
-                # Local file — resolve to canonical path to prevent traversal via encoded '..'
-                file_path = Path(unquote(parsed.path)).resolve()
-                if not file_path.is_file():
-                    raise ValueError(
-                        f"File not found or not a regular file: {file_path}"
-                    )
-                with open(file_path) as f:
-                    data = json.load(f)
-            elif parsed.scheme in ("http", "https"):
-                # Remote file — with timeout and bounded read
-                with urllib.request.urlopen(file_uri, timeout=30) as response:
-                    raw = response.read(MAX_FILE_SIZE + 1)
-                    if len(raw) > MAX_FILE_SIZE:
-                        raise RuntimeError(
-                            f"Remote file exceeds {MAX_FILE_SIZE // (1024 * 1024)} MB limit"
-                        )
-                    data = json.loads(raw.decode("utf-8"))
-            else:
-                raise ValueError(f"Unsupported URI scheme: {parsed.scheme}")
-
-            # Handle both single entity and list of entities
-            if isinstance(data, list):
-                return data
-            else:
-                return [data]
-
+            content = self._read_file_uri(file_uri, parsed)
+            suffix = Path(unquote(parsed.path)).suffix.lower()
+            if suffix == ".jsonl":
+                return self._parse_jsonl_items(content)
+            return self._parse_json_items(content)
         except RuntimeError:
             raise
         except Exception as e:
-            raise RuntimeError(f"Failed to load entities from {file_uri}: {e}") from e
+            raise RuntimeError(f"Failed to load items from {file_uri}: {e}") from e
+
+    def _read_file_uri(self, file_uri: str, parsed) -> str:
+        """Read a local or remote file URI into text with a size cap."""
+        if parsed.scheme == "file":
+            file_path = Path(unquote(parsed.path)).resolve()
+            if not file_path.is_file():
+                raise ValueError(f"File not found or not a regular file: {file_path}")
+            if file_path.stat().st_size > MAX_FILE_SIZE:
+                raise RuntimeError(
+                    f"Local file exceeds {MAX_FILE_SIZE // (1024 * 1024)} MB limit"
+                )
+            return file_path.read_text()
+
+        if parsed.scheme in ("http", "https"):
+            with urllib.request.urlopen(file_uri, timeout=30) as response:
+                raw = response.read(MAX_FILE_SIZE + 1)
+                if len(raw) > MAX_FILE_SIZE:
+                    raise RuntimeError(
+                        f"Remote file exceeds {MAX_FILE_SIZE // (1024 * 1024)} MB limit"
+                    )
+                return raw.decode("utf-8")
+
+        raise ValueError(f"Unsupported URI scheme: {parsed.scheme}")
+
+    def _parse_json_items(self, content: str) -> List[Dict[str, Any]]:
+        """Parse JSON content and normalize to batch items."""
+        data = json.loads(content)
+        if isinstance(data, list):
+            return self._normalize_batch_items(data)
+        return self._normalize_batch_items([data])
+
+    def _parse_jsonl_items(self, content: str) -> List[Dict[str, Any]]:
+        """Parse JSONL content and normalize to batch items."""
+        parsed_items = []
+        for line_number, line in enumerate(content.splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSONL on line {line_number}: {e}") from e
+            if not isinstance(parsed, dict):
+                raise ValueError(f"JSONL line {line_number} must be a JSON object")
+            if "correlation_id" not in parsed:
+                parsed["correlation_id"] = f"line-{len(parsed_items) + 1}"
+            parsed_items.append(parsed)
+        return self._normalize_batch_items(parsed_items, default_prefix="line")

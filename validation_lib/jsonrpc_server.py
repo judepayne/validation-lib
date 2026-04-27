@@ -23,7 +23,7 @@ import sys
 import json
 import signal
 import argparse
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from validation_lib import ValidationService
 
@@ -268,6 +268,7 @@ class ValidationJsonRpcServer:
         entity_type = params.get("entity_type")
         entity_data = params.get("entity_data")
         ruleset_name = params.get("ruleset_name")
+        plugin_name = params.get("plugin_name")
 
         if entity_type is None:
             raise ValueError("Missing required parameter: entity_type")
@@ -276,7 +277,9 @@ class ValidationJsonRpcServer:
         if ruleset_name is None:
             raise ValueError("Missing required parameter: ruleset_name")
 
-        return self.service.validate(entity_type, entity_data, ruleset_name)
+        return self.service.validate(
+            entity_type, entity_data, ruleset_name, plugin_name=plugin_name
+        )
 
     def _handle_discover_rules(self, params: Dict[str, Any]) -> Any:
         """Handle 'discover_rules' method."""
@@ -300,37 +303,32 @@ class ValidationJsonRpcServer:
 
     def _handle_batch_validate(self, params: Dict[str, Any]) -> Any:
         """Handle 'batch_validate' method."""
-        entities = params.get("entities")
-        id_fields = params.get("id_fields")
+        items = params.get("items")
         ruleset_name = params.get("ruleset_name")
+        plugin_name = params.get("plugin_name")
 
-        if entities is None:
-            raise ValueError("Missing required parameter: entities")
-        if id_fields is None:
-            raise ValueError("Missing required parameter: id_fields")
+        if items is None:
+            raise ValueError("Missing required parameter: items")
         if ruleset_name is None:
             raise ValueError("Missing required parameter: ruleset_name")
 
-        return self.service.batch_validate(entities, id_fields, ruleset_name)
+        return self.service.batch_validate(
+            items, ruleset_name, plugin_name=plugin_name
+        )
 
     def _handle_batch_file_validate(self, params: Dict[str, Any]) -> Any:
         """Handle 'batch_file_validate' method."""
         file_uri = params.get("file_uri")
-        entity_types = params.get("entity_types")
-        id_fields = params.get("id_fields")
         ruleset_name = params.get("ruleset_name")
+        plugin_name = params.get("plugin_name")
 
         if file_uri is None:
             raise ValueError("Missing required parameter: file_uri")
-        if entity_types is None:
-            raise ValueError("Missing required parameter: entity_types")
-        if id_fields is None:
-            raise ValueError("Missing required parameter: id_fields")
         if ruleset_name is None:
             raise ValueError("Missing required parameter: ruleset_name")
 
         return self.service.batch_file_validate(
-            file_uri, entity_types, id_fields, ruleset_name
+            file_uri, ruleset_name, plugin_name=plugin_name
         )
 
     def _handle_reload_logic(self, params: Dict[str, Any]) -> Any:

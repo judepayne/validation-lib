@@ -8,6 +8,8 @@ This document covers everything needed to write, organise, and version validatio
 
 Rules are Python classes that live in `validation-logic/rules/<entity_type>/`. Each rule file contains exactly one class named `Rule` that inherits from `ValidationRule`. The rule executor discovers and loads rules dynamically by filename — no registration or manifest is needed.
 
+Plugins are separate from rules. A plugin may convert a source-format item into canonical entity JSON before validation, but rules always see canonical entity data through entity helpers. See [Plugins](PLUGINS.md) for the plugin interface.
+
 ---
 
 ## Rule statuses

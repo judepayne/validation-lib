@@ -17,8 +17,8 @@ business_config_uri: "https://raw.githubusercontent.com/judepayne/validation-log
 coordination_service_config_uri: "coordination-service-config.yaml"
 
 # Root directory for the local logic cache (rules, helpers, schemas, config YAMLs).
-# Override when running multiple independent instances on the same host to prevent
-# cache collisions. Instances pointing at the same logic source can share a dir safely.
+# Override when running multiple independent long-lived instances on the same host.
+# reload_logic() clears this cache, so independent processes should not share it.
 logic_cache_dir: "/tmp/validation-lib"
 
 # Cache TTL: auto-refresh if logic cache is older than this (seconds)
@@ -53,7 +53,9 @@ The `business_config_uri` is the key indirection point. It can point to:
 | `"file:///opt/validation/logic/business-config.yaml"` | Absolute path | Mounted volume, CI |
 | `"https://cdn.example.com/logic/business-config.yaml"` | Remote URL | Production — logic team deploys independently |
 
-When `business_config_uri` is a remote URL, the library derives the base URI from it and fetches the entire logic package (rules, helpers, schemas) into a local cache. See [Logic fetching and caching](#logic-fetching-and-caching) below.
+When `business_config_uri` is a remote URL, the library derives the base URI from it and fetches the entire logic package (rules, helpers, schemas, plugins) into a local cache. See [Logic fetching and caching](#logic-fetching-and-caching) below.
+
+For local testing or deployment overrides, `VALIDATION_LIB_BUSINESS_CONFIG_URI` can point at an alternate business config URI without editing the bundled config. `VALIDATION_LIB_LOGIC_CACHE_DIR` can similarly override the cache root per process.
 
 ---
 
@@ -76,6 +78,14 @@ structural_files:
   - entity_helpers/conversions.py
   - schema_helpers/__init__.py
   - schema_helpers/schema_loader.py
+  - plugins/__init__.py
+  - plugins/base.py
+
+# Plugins — one-item source-format adapters
+plugins:
+  vendor_x_loan:
+    file: plugins/vendor_x_loan.py
+    entity_type: loan
 
 # Rulesets — named groups of rules with metadata
 rulesets:
@@ -119,9 +129,22 @@ version_compatibility:
   strict_major_version: true           # unknown major version → error
 ```
 
+### Plugins
+
+The optional `plugins` section registers source-format adapters that live under `plugins/` in `validation-logic`.
+
+```yaml
+plugins:
+  vendor_x_loan:
+    file: plugins/vendor_x_loan.py
+    entity_type: loan
+```
+
+Each plugin converts one raw input item into one canonical entity dict containing `$schema`. The plugin declares only the target entity type; schema-version routing still comes from the converted entity's `$schema` field. See [Plugins](PLUGINS.md) for the interface and examples.
+
 ### Rule routing
 
-When `validate()` is called, the engine resolves which rules to run in this order:
+When `validate()` is called, plugin conversion runs first if `plugin_name` is supplied. Then the engine resolves which rules to run in this order:
 
 1. Extract the `$schema` URL from `entity_data`
 2. Look up the URL as a key in the active ruleset's `rules` map
@@ -161,14 +184,14 @@ When `business_config_uri` is an `http://` or `https://` URL, the `LogicPackageF
 1. Fetches `business-config.yaml` from the URL
 2. Derives the base URI (strips the filename)
 3. Reads `structural_files` from the config to build the file list
-4. Derives rule and helper filenames from the ruleset definitions
+4. Derives rule, helper, schema, and plugin filenames from the business config
 5. Fetches each file and caches it locally under `/tmp/validation-lib/logic/`
 
 The local cache mirrors the remote `logic/` directory structure exactly, so all imports work unchanged.
 
 ### Cache directory
 
-The cache root defaults to `/tmp/validation-lib/` and is configurable via `logic_cache_dir` in `local-config.yaml`. Everything hangs off this single root:
+The cache root defaults to `/tmp/validation-lib/` and is configurable via `logic_cache_dir` in `local-config.yaml` or `VALIDATION_LIB_LOGIC_CACHE_DIR`. Independent long-lived processes should use distinct cache roots because `reload_logic()` clears the cache. Everything hangs off this single root:
 
 ```
 <logic_cache_dir>/           ← configurable root (default /tmp/validation-lib)
@@ -176,6 +199,7 @@ The cache root defaults to `/tmp/validation-lib/` and is configurable via `logic
 │   ├── rules/
 │   ├── entity_helpers/
 │   ├── schema_helpers/
+│   ├── plugins/
 │   └── models/
 └── config_<hash>.yaml       ← cached business config (keyed by source URI hash)
 ```
@@ -207,6 +231,7 @@ The architecture relies on immutable filenames for rules and helpers:
 
 - **Rules** — once published, a rule file is never edited in place. Changes produce a new file (`rule_001_v2.py`) with a corresponding `business-config.yaml` update.
 - **Entity helpers** — same: breaking schema changes produce a new helper (`loan_v2.py`), not a modification of `loan_v1.py`.
+- **Plugins** — plugin files are executable source-format adapters and should be reviewed/versioned like rules.
 - **Schemas** — published schemas are immutable; breaking changes increment the major version.
 - **`business-config.yaml`** — the only file that changes in place. Editing it is how the rules team "deploys": add a rule, reorder a hierarchy, point a schema to a new helper.
 

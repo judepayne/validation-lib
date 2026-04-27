@@ -66,7 +66,13 @@ def run_config(label: str, n_workers=None) -> dict:
     """
     svc = ValidationService()
 
-    if n_workers is not None:
+    if svc._pool is not None:
+        svc._pool.shutdown(wait=True)
+        svc._pool = None
+
+    if n_workers is None:
+        svc.config_loader.local_config["batch_parallelism"] = False
+    else:
         # Patch local_config so we can test different worker counts without
         # editing the bundled YAML between runs.
         svc.config_loader.local_config["batch_parallelism"] = True
@@ -77,7 +83,11 @@ def run_config(label: str, n_workers=None) -> dict:
         times_ms = []
         for i in range(N_WARMUP + N_RUNS):
             t0 = time.perf_counter()
-            results = svc.batch_validate(loans, ["id"], RULESET)
+            items = [
+                {"correlation_id": loan.get("id", f"loan-{idx}"), "data": loan}
+                for idx, loan in enumerate(loans, start=1)
+            ]
+            results = svc.batch_validate(items, RULESET)
             elapsed_ms = (time.perf_counter() - t0) * 1000
             tag = (
                 f"warmup {i + 1}"
@@ -88,8 +98,8 @@ def run_config(label: str, n_workers=None) -> dict:
             if i >= N_WARMUP:
                 times_ms.append(elapsed_ms)
 
-        assert len(results) == N_LOANS, (
-            f"Expected {N_LOANS} results, got {len(results)}"
+        assert len(results["items"]) == N_LOANS, (
+            f"Expected {N_LOANS} results, got {len(results['items'])}"
         )
 
     finally:

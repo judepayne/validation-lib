@@ -26,6 +26,11 @@ ConfigLoader              LogicPackageFetcher
 • caches remote configs   • caches to /tmp/validation-lib/logic/
      │
      ▼
+PluginLoader  (plugin_loader.py)
+• optional source-format adapter loading
+• converts raw input to canonical entity JSON
+     │
+     ▼
 ValidationEngine  (validation_engine.py)
 • rule routing (schema URL → ruleset → rule list)
 • entity helper injection
@@ -57,6 +62,8 @@ The **coordination proxy** (`coordination_proxy.py`) sits alongside `ValidationE
 | `api.py` | `ValidationService` — public API, auto-refresh, batching, file loading |
 | `config_loader.py` | Two-tier config loading; caches remote configs by URI hash |
 | `logic_fetcher.py` | `LogicPackageFetcher` — fetches and caches the full `logic/` package |
+| `plugin_loader.py` | `PluginLoader` — dynamic import of input adapter plugins by name |
+| `results.py` | Object-level status derivation and response envelope helpers |
 | `validation_engine.py` | `ValidationEngine` — rule routing, entity helper injection, discover/validate orchestration |
 | `rule_loader.py` | `RuleLoader` — dynamic import of `Rule` classes by rule ID |
 | `rule_executor.py` | `RuleExecutor` — hierarchical rule execution with timing |
@@ -76,6 +83,9 @@ A call to `service.validate("loan", entity_data, "quick")` follows this path:
 1. ValidationService.validate()
    │
    ├─ Mid-session staleness check (debounced to every 5 min)
+   │
+   ├─ Optional PluginLoader.load_plugin(plugin_name)
+   │    Converts raw input to canonical entity JSON, or returns PLUGIN_FAIL
    │
    ├─ CoordinationProxy.get_associated_data()   ← Phase 1: get required data
    │    Currently returns {} (stub)
@@ -105,7 +115,20 @@ A call to `service.validate("loan", entity_data, "quick")` follows this path:
              └─ If FAIL, NORUN, or ERROR → mark children NORUN
 ```
 
-**Result structure** (one dict per rule, nested for children):
+`validate()` returns an object-level envelope whose `results` key contains rule results:
+
+```python
+{
+    "status": "FAIL",
+    "entity_type": "loan",
+    "ruleset": "quick",
+    "results": [...]
+}
+```
+
+If plugin conversion fails, `status` is `PLUGIN_FAIL` and `results` is empty. `PLUGIN_FAIL` is not a rule status.
+
+**Rule result structure** (one dict per rule, nested for children):
 
 ```python
 {
@@ -207,7 +230,7 @@ This enables model-change impact analysis: "which rules would break if we rename
 1. Fetches `business-config.yaml` from the URL
 2. Computes the base URI (strips the filename)
 3. Reads `structural_files` from the config
-4. Derives additional file paths from ruleset rule IDs and `schema_to_helper_mapping`
+4. Derives additional file paths from ruleset rule IDs, `schema_to_helper_mapping`, and plugin config
 5. Fetches each file and writes it to `/tmp/validation-lib/logic/`, mirroring the remote structure
 6. Sets `logic_dir` to the cache root so `sys.path` and all imports work unchanged
 
@@ -224,8 +247,11 @@ Because `validation-logic` is not a Python package (no `setup.py`, not pip-insta
 from rules.base import ValidationRule
 from entity_helpers import create_entity_helper
 from schema_helpers import load_schema
+
+# Inside a plugin file:
+from plugins.base import PluginError, ValidationPlugin
 ```
 
 These imports are **unresolvable at static analysis time** — LSP errors about `entity_helpers` and `rules.*` are expected and harmless. They resolve correctly at runtime once `sys.path` is configured.
 
-On `reload_logic()`, the engine cleans up stale `sys.path` entries and invalidates cached modules in `sys.modules` so the fresh logic is imported cleanly.
+On `reload_logic()`, the engine cleans up stale `sys.path` entries and invalidates cached modules in `sys.modules` so the fresh logic is imported cleanly. This includes `entity_helpers`, `rules`, `schema_helpers`, and `plugins` modules.
